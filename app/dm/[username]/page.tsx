@@ -2,6 +2,7 @@ import scrapeInstagram from "@/app/api/instagram/instagram-scraper";
 import Image from "next/image";
 import Link from "next/link";
 import DMMessagesList from "@/app/components/dm-messages-list";
+import BottomNavigation from "@/app/components/bottom-navigation";
 
 interface PageParams {
   username?: string;
@@ -126,6 +127,7 @@ export default async function DMPage({ params }: { params: PageParams | Promise<
 
   const data = result.data;
   const profile = data.profile;
+  const maskedProfileName = maskFullName(profile.fullName, profile.username);
   const hasFollowing = data.followingSample.length > 0;
   // Ordenar de forma determinística baseado apenas no hash do username
   // Isso garante que mesmo se o scraper retornar em ordem diferente, a ordem aqui será sempre a mesma
@@ -362,61 +364,11 @@ export default async function DMPage({ params }: { params: PageParams | Promise<
         </div>
 
         {/* Bottom Navigation */}
-        <nav className="fixed bottom-0 left-0 right-0 z-10 flex items-center justify-around border-t border-white/10 bg-black px-4 py-2">
-          <svg
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="currentColor"
-            className="text-white"
-          >
-            <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" />
-          </svg>
-          <svg
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className="text-white"
-          >
-            <circle cx="11" cy="11" r="8" />
-            <path d="m21 21-4.35-4.35" />
-          </svg>
-          <svg
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className="text-white"
-          >
-            <line x1="12" y1="5" x2="12" y2="19" />
-            <line x1="5" y1="12" x2="19" y2="12" />
-          </svg>
-          <Image
-            src="https://www.deepgram.online/home%20-%20feed/icones/reels.svg"
-            alt="Reels"
-            width={24}
-            height={24}
-            className="cursor-pointer"
-          />
-          <div className="h-6 w-6 rounded-full border border-white/20">
-            <Image
-              src={profile.profilePicUrl}
-              alt={profile.username}
-              width={24}
-              height={24}
-              className="h-full w-full rounded-full object-cover"
-            />
-          </div>
-        </nav>
+        <BottomNavigation
+          profilePicUrl={profile.profilePicUrl}
+          maskedProfileName={maskedProfileName}
+          username={username}
+        />
       </div>
     </main>
   );
