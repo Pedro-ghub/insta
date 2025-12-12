@@ -38,6 +38,8 @@ export default function MatrixBackground() {
     const colors = ['#ffff00', '#ff0000', '#ffaa00', '#ff4444'];
 
     function draw() {
+      if (!ctx) return;
+      
       // Fundo mais escuro para criar rastro
       ctx.fillStyle = 'rgba(0, 0, 0, 0.15)';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
