@@ -1,11 +1,19 @@
 import scrapeInstagram from "@/app/api/instagram/instagram-scraper";
 import Image from "next/image";
 import Link from "next/link";
+import { cookies } from "next/headers";
 import DMMessagesList from "@/app/components/dm-messages-list";
 import BottomNavigation from "@/app/components/bottom-navigation";
+import SetDmFollowingCookie from "@/app/components/set-dm-following-cookie";
 
 interface PageParams {
   username?: string;
+}
+
+interface StoredFollowingUser {
+  id: string;
+  username: string;
+  profilePicUrl: string;
 }
 
 async function resolveParams(params: unknown): Promise<PageParams> {
@@ -72,7 +80,7 @@ const messageOptions = [
   "tô esperando você falar 'vem'…",
   "para de me provocar 😏",
   "você me deixa sem jeito…",
-  "me manda uma foto agora (sem pensar muito)",
+  "me manda uma foto vida",
   "eu gostei mais do que devia…",
   "se eu falar o que eu queria agora você…",
   "tô indo dormir… mas se você responder eu acordo",
@@ -84,6 +92,9 @@ const messageOptions = [
   "a parte que eu mais gostei foi quando você…",
   "eii, tá aí? 🔥",
   "preciso falar contigo parada séria",
+  "não acredito que você falou aquilo pra mim e pra ela igual…",
+  "você sempre some quando tá com ela…",
+  "não vai postar aquilo que combinamos né?",
 ];
 
 function getDeterministicMessage(seed: string): string {
@@ -115,7 +126,7 @@ function getDeterministicNote(seed: string): string {
 export default async function DMPage({ params }: { params: PageParams | Promise<PageParams> }) {
   const resolved = await resolveParams(params);
   const username = resolved.username ?? "";
-  
+
   if (!username) {
     return (
       <main className="min-h-screen bg-black text-white">
@@ -147,19 +158,44 @@ export default async function DMPage({ params }: { params: PageParams | Promise<
   const profile = data.profile;
   const maskedProfileName = maskFullName(profile.fullName, profile.username);
   const hasFollowing = data.followingSample.length > 0;
-  // Ordenar de forma determinística baseado apenas no hash do username
-  // Isso garante que mesmo se o scraper retornar em ordem diferente, a ordem aqui será sempre a mesma
-  const followingUsers = hasFollowing 
-    ? [...data.followingSample].sort((a, b) => {
-        const hashA = hashString(a.username);
-        const hashB = hashString(b.username);
-        if (hashA === hashB) {
-          return a.username.localeCompare(b.username);
-        }
-        return hashA - hashB;
-      })
-    : [];
-  
+
+  const cookieStore = await cookies();
+  const followingCookieName = `sg_dm_following_${username}`;
+  const existingFollowingCookie = cookieStore.get(followingCookieName)?.value ?? "";
+
+  let storedFollowingUsers: StoredFollowingUser[] = [];
+
+  if (existingFollowingCookie) {
+    try {
+      storedFollowingUsers = JSON.parse(
+        decodeURIComponent(existingFollowingCookie),
+      ) as StoredFollowingUser[];
+    } catch {
+      storedFollowingUsers = [];
+    }
+  }
+
+  if (storedFollowingUsers.length === 0 && hasFollowing) {
+    const sorted = [...data.followingSample].sort((a, b) => {
+      const hashA = hashString(a.username);
+      const hashB = hashString(b.username);
+      if (hashA === hashB) {
+        return a.username.localeCompare(b.username);
+      }
+      return hashA - hashB;
+    });
+
+    const sliced = sorted.slice(0, 15);
+
+    storedFollowingUsers = sliced.map((user) => ({
+      id: String(user.id),
+      username: user.username,
+      profilePicUrl: user.profilePicUrl,
+    }));
+  }
+
+  const followingUsers = storedFollowingUsers;
+
   // Garantir que temos pelo menos um usuário antes de gerar mensagens
   if (followingUsers.length === 0) {
     return (
@@ -173,54 +209,21 @@ export default async function DMPage({ params }: { params: PageParams | Promise<
       </main>
     );
   }
-  
-  // Gerar lista de mensagens com dados dos seguidos (determinístico)
-  // Primeiras 5 mensagens fixas com foco em ciúme + flerte
-  const fixedMessages = [
-    { message: "você tava com quem ontem?…", time: "25 min", isLocked: false, isBlurred: false },
-    { message: "não some assim não 😶", time: "8 h", isLocked: true, isBlurred: false },
-    { message: "vi você online e fingiu que não viu…", time: "4 h", isLocked: true, isBlurred: false },
-    { message: "promete que isso fica entre a gente?", time: "12 min", isLocked: true, isBlurred: false },
-    { message: "tô esperando você falar 'vem'…", time: "18 min", isLocked: true, isBlurred: false },
-  ];
 
-  const messages = followingUsers.slice(0, 8).map((user, index) => {
-    // Primeiras 5 mensagens são fixas
-    if (index < 5) {
-      const fixedMsg = fixedMessages[index];
-      
-      const isLocked = fixedMsg.isLocked;
-      const hasGradient = false;
-      const hasOnlineIndicator = true;
-      const isOrangeIndicator = false;
-      const isBlurred = fixedMsg.isBlurred;
-      const hasCameraDot = true;
-      
-      return {
-        user,
-        isLocked,
-        hasGradient,
-        hasOnlineIndicator,
-        isOrangeIndicator,
-        message: fixedMsg.message,
-        isBlurred,
-        hasCameraDot,
-        time: fixedMsg.time,
-      };
-    }
-    
-    // Mensagens 6-8: geradas normalmente com mensagens borradas
-    const isLocked = index >= 4;
-    const hasGradient = index >= 5;
+  const messages = followingUsers.slice(0, 15).map((user, index) => {
+    // Mensagens geradas de forma determinística por usuário consultado,
+    // mas com sensação de aleatoriedade para cada perfil.
+    const isLocked = index >= 1;
+    const hasGradient = index >= 4;
     const hasOnlineIndicator = true;
     const isOrangeIndicator = false;
-    const isBlurred = index >= 3; // A partir do índice 3, mensagem borrada
-    
-    const messageSeed = `${username}-${user.username}-${index}-message`;
+    const isBlurred = index >= 5; // A partir do índice 5, mensagem borrada (mais algumas sem blur para aumentar curiosidade)
+
+    const messageSeed = `${username}-${user.username}-${index}-preview`;
     const timeSeed = `${username}-${user.username}-${index}-time`;
     const message = getDeterministicMessage(messageSeed);
-    const hasCameraDot = index !== 3 && index !== 6 && index !== 7;
-    
+    const hasCameraDot = index !== 2 && index !== 5 && index !== 7;
+
     return {
       user,
       isLocked,
@@ -236,6 +239,7 @@ export default async function DMPage({ params }: { params: PageParams | Promise<
 
   return (
     <main className="min-h-screen bg-black text-white">
+      <SetDmFollowingCookie username={username} followingUsers={followingUsers} />
       <div className="mx-auto max-w-md bg-black pb-16">
         {/* Header DM */}
         <header className="sticky top-0 z-10 border-b border-white/10 bg-black">
@@ -283,7 +287,7 @@ export default async function DMPage({ params }: { params: PageParams | Promise<
               </svg>
             </div>
           </div>
-          
+
           {/* Barra de busca */}
           <div className="px-4 pb-4">
             <div className="flex items-center gap-3 rounded-xl bg-white/10 px-4 py-3.5">
