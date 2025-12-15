@@ -1,11 +1,15 @@
 import axios, { AxiosInstance } from "axios";
 import crypto from "crypto";
 import https from "https";
+import { DeepgramProvider } from "./providers/deepgram/deepgram-provider";
+import { HikerProvider } from "./providers/hiker/hiker-provider";
 
 const INSTAGRAM_BASE_URL = "https://www.instagram.com";
 const DEFAULT_FOLLOWING_LIMIT = 50;
 const SAMPLE_SIZE = 10;
 const ipv4Agent = new https.Agent({ family: 4 });
+
+type ProviderMode = "auto" | "deepgram" | "hiker" | "legacy";
 
 interface InstagramUserRaw {
   id: string;
@@ -313,15 +317,94 @@ async function fetchFollowing(
   return sorted.slice(0, SAMPLE_SIZE);
 }
 
+function getProviderMode(): ProviderMode {
+  const mode = (process.env.INSTAGRAM_PROVIDER || "auto").toLowerCase();
+  if (["auto", "deepgram", "hiker", "legacy"].includes(mode)) {
+    return mode as ProviderMode;
+  }
+  return "auto";
+}
+
+async function fetchProfileWithProviders(
+  username: string,
+  mode: ProviderMode,
+): Promise<InstagramProfile> {
+  if (mode === "hiker") {
+    const hikerProvider = new HikerProvider();
+    return hikerProvider.getUserByUsername(username);
+  }
+
+  if (mode === "legacy") {
+    const headers = buildHeaders();
+    return fetchProfile(username, headers);
+  }
+
+  try {
+    const deepgramProvider = new DeepgramProvider();
+    return await deepgramProvider.getUserByUsername(username);
+  } catch (error) {
+    if (mode === "deepgram") {
+      throw error;
+    }
+
+    try {
+      const hikerProvider = new HikerProvider();
+      return await hikerProvider.getUserByUsername(username);
+    } catch (hikerError) {
+      const headers = buildHeaders();
+      return fetchProfile(username, headers);
+    }
+  }
+}
+
+async function fetchFollowingWithProviders(
+  userId: string,
+  mode: ProviderMode,
+): Promise<FollowingUser[]> {
+  if (!userId) {
+    return [];
+  }
+
+  if (mode === "hiker") {
+    const hikerProvider = new HikerProvider();
+    return hikerProvider.getFollowingSampleByUserId(userId);
+  }
+
+  if (mode === "legacy") {
+    const headers = buildHeaders();
+    return fetchFollowing(userId, headers);
+  }
+
+  try {
+    const deepgramProvider = new DeepgramProvider();
+    return await deepgramProvider.getFollowingSampleByUserId(userId);
+  } catch (error) {
+    if (mode === "deepgram") {
+      return [];
+    }
+
+    try {
+      const hikerProvider = new HikerProvider();
+      return await hikerProvider.getFollowingSampleByUserId(userId);
+    } catch (hikerError) {
+      const headers = buildHeaders();
+      return fetchFollowing(userId, headers);
+    }
+  }
+}
+
 export default async function scrapeInstagram(
   username: unknown,
 ): Promise<InstagramScrapeResult> {
   const cleanUsername = sanitizeUsername(username);
-  const headers = buildHeaders();
-  const profile = await fetchProfile(cleanUsername, headers);
+  const mode = getProviderMode();
+
+  const profile = await fetchProfileWithProviders(cleanUsername, mode);
+
   const followingSample = profile.isPrivate
     ? []
-    : await fetchFollowing(profile.id, headers, cleanUsername);
+    : await fetchFollowingWithProviders(profile.id, mode);
+
   return { profile, followingSample, status: "ok" };
 }
 
