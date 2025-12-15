@@ -1,10 +1,9 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import Image from 'next/image';
-import Link from 'next/link';
-import AccessPopup from './access-popup';
-
+import { useState } from "react";
+import Image from "next/image";
+import Link from "next/link";
+import AccessPopup from "./access-popup";
 interface Message {
   user: {
     id: string;
@@ -34,6 +33,7 @@ function maskUsername(username: string): string {
 
 export default function DMMessagesList({ messages, username }: DMMessagesListProps) {
   const [showPopup, setShowPopup] = useState(false);
+  const [hasShownOnScrollEnd, setHasShownOnScrollEnd] = useState(false);
 
   const handleMessageClick = (index: number) => {
     // Se não for o primeiro (índice 0), mostrar popup
@@ -42,14 +42,28 @@ export default function DMMessagesList({ messages, username }: DMMessagesListPro
     }
   };
 
+  const handleScroll: React.UIEventHandler<HTMLDivElement> = (event) => {
+    if (hasShownOnScrollEnd) return;
+    const target = event.currentTarget;
+    const { scrollTop, scrollHeight, clientHeight } = target;
+    const isAtBottom = scrollTop + clientHeight >= scrollHeight - 16;
+    if (isAtBottom) {
+      setHasShownOnScrollEnd(true);
+      setShowPopup(true);
+    }
+  };
+
   return (
     <>
-      <div className="divide-y divide-white/10">
+      <div
+        className="divide-y divide-white/10 max-h-[420px] overflow-y-auto"
+        onScroll={handleScroll}
+      >
         {messages.map((msg, index) => {
           const isFirst = index === 0;
           const firstUserUsername = messages[0]?.user.username || "";
           const className = "flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-white/5 transition";
-          
+
           const content = (
             <>
               <div className="relative shrink-0">

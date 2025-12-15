@@ -1,11 +1,25 @@
 import scrapeInstagram from "@/app/api/instagram/instagram-scraper";
 import Image from "next/image";
 import Link from "next/link";
+import { cookies } from "next/headers";
 import ChatMessages from "@/app/components/chat-messages";
 
 interface PageParams {
   username?: string;
   chatId?: string;
+}
+
+interface ChatMessage {
+  type: "other" | "me";
+  text: string;
+  blurred?: boolean;
+  duration?: string;
+}
+
+interface StoredFollowingUser {
+  id: string;
+  username: string;
+  profilePicUrl: string;
 }
 
 async function resolveParams(params: unknown): Promise<PageParams> {
@@ -30,28 +44,79 @@ function hashString(str: string): number {
   return Math.abs(hash);
 }
 
-// Mensagens anteriores (com blur) - aparecem ao fazer scroll para cima
-const previousMessages = [
-  { type: "other" as const, text: "você não me respondeu ontem…", blurred: true },
-  { type: "me" as const, text: "desculpa, tava ocupado", blurred: true },
-  { type: "other" as const, text: "ocupado com o quê?", blurred: true },
-  { type: "me" as const, text: "nada demais, só trabalho", blurred: true },
-  { type: "other" as const, text: "hmm… acredito", blurred: true },
-  { type: "other" as const, text: "voice", duration: "0:15", blurred: true },
+// Templates de roteiros de chat (ciúme + flerte + intuição de traição)
+const chatTemplates: { previous: ChatMessage[]; main: ChatMessage[] }[] = [
+  {
+    // Template 1: viu ontem, fingiu que não viu
+    previous: [
+      { type: "other", text: "você não me respondeu ontem…", blurred: true },
+      { type: "me", text: "desculpa, tava ocupado", blurred: true },
+      { type: "other", text: "ocupado com o quê?", blurred: true },
+      { type: "me", text: "nada demais, só trabalho", blurred: true },
+      { type: "other", text: "hmm… acredito", blurred: true },
+      { type: "other", text: "voice", duration: "0:15", blurred: true },
+    ],
+    main: [
+      { type: "other", text: "você tava onde ontem? 🤨" },
+      { type: "me", text: "eu? nada… por quê?" },
+      { type: "other", text: "porque eu vi você e fingi que não vi…" },
+      { type: "me", text: "você viu mesmo? kkk" },
+      { type: "other", text: "não faz essa cara de inocente…" },
+      { type: "other", text: "voice", duration: "0:27" },
+      { type: "me", text: "voice", duration: "1:12" },
+      { type: "other", text: "tá… então hoje você me deve uma coisa." },
+      { type: "me", text: "depende do que for 😅" },
+    ],
+  },
+  {
+    // Template 2: curtidas e stories
+    previous: [
+      { type: "other", text: "você curtiu tudo denovo…", blurred: true },
+      { type: "me", text: "é só amizade, relaxa", blurred: true },
+      { type: "other", text: "engraçado, comigo você não reage assim", blurred: true },
+      { type: "me", text: "para, você sabe que é diferente", blurred: true },
+      { type: "other", text: "diferente como? 🤔", blurred: true },
+      { type: "me", text: "voice", duration: "0:41", blurred: true },
+    ],
+    main: [
+      { type: "other", text: "não achei graça daquele story de ontem…" },
+      { type: "me", text: "qual deles? 😅" },
+      { type: "other", text: "o que você marcou 'melhor companhia'…" },
+      { type: "me", text: "exagera não, foi zoeira" },
+      { type: "other", text: "zoeira pra quem lê… pra mim não foi" },
+      { type: "other", text: "voice", duration: "0:32" },
+      { type: "me", text: "voice", duration: "1:03" },
+      { type: "other", text: "tá… então prova que é só zoeira." },
+      { type: "me", text: "cuidado com o que você pede 👀" },
+    ],
+  },
+  {
+    // Template 3: sumiço e segredo
+    previous: [
+      { type: "me", text: "cheguei em casa agora", blurred: true },
+      { type: "other", text: "demorou hein…", blurred: true },
+      { type: "me", text: "nem foi tudo isso", blurred: true },
+      { type: "other", text: "pra quem sumiu o dia todo foi sim", blurred: true },
+      { type: "other", text: "voice", duration: "0:19", blurred: true },
+    ],
+    main: [
+      { type: "other", text: "se eu perguntar com quem você tava, você responde?" },
+      { type: "me", text: "depende se você vai ficar com ciúmes ou não 😏" },
+      { type: "other", text: "então já sei que não vou gostar da resposta" },
+      { type: "me", text: "calma… não foi nada demais" },
+      { type: "other", text: "engraçado, sempre é 'nada demais'" },
+      { type: "me", text: "voice", duration: "0:54" },
+      { type: "other", text: "voice", duration: "0:47" },
+      { type: "other", text: "só me promete uma coisa: não mente pra mim." },
+      { type: "me", text: "então não pergunta tudo 👀" },
+    ],
+  },
 ];
 
-// Mensagens principais (sem blur) - storytelling completo
-const chatMessages = [
-  { type: "other" as const, text: "você tava onde ontem? 🤨", blurred: false },
-  { type: "me" as const, text: "eu? nada… por quê?", blurred: false },
-  { type: "other" as const, text: "porque eu vi você e fingi que não vi…", blurred: false },
-  { type: "me" as const, text: "você viu mesmo? kkk", blurred: false },
-  { type: "other" as const, text: "não faz essa cara de inocente…", blurred: false },
-  { type: "other" as const, text: "voice", duration: "0:27", blurred: false },
-  { type: "me" as const, text: "voice", duration: "1:12", blurred: false },
-  { type: "other" as const, text: "tá… então hoje você me deve uma coisa.", blurred: false },
-  { type: "me" as const, text: "depende do que for 😅", blurred: false },
-];
+function getDeterministicChatTemplate(seed: string): { previous: ChatMessage[]; main: ChatMessage[] } {
+  const hash = hashString(seed);
+  return chatTemplates[hash % chatTemplates.length];
+}
 
 export default async function ChatPage({ params }: { params: PageParams | Promise<PageParams> }) {
   const resolved = await resolveParams(params);
@@ -87,29 +152,58 @@ export default async function ChatPage({ params }: { params: PageParams | Promis
   const data = result.data;
   const profile = data.profile;
   const hasFollowing = data.followingSample.length > 0;
-  // Ordenar de forma determinística baseado apenas no hash do username
-  // Isso garante que mesmo se o scraper retornar em ordem diferente, a ordem aqui será sempre a mesma
-  const followingUsers = hasFollowing 
-    ? [...data.followingSample].sort((a, b) => {
-        const hashA = hashString(a.username);
-        const hashB = hashString(b.username);
-        if (hashA === hashB) {
-          return a.username.localeCompare(b.username);
-        }
-        return hashA - hashB;
-      })
-    : [];
-  
-  // IMPORTANTE: Sempre usar o primeiro usuário da lista ordenada (mesmo que aparece na primeira posição da DM)
-  // Isso garante que a foto seja sempre a mesma, independente do chatId na URL
-  // A lista já vem ordenada de forma determinística do scraper
-  const chatUser = followingUsers.length > 0 ? followingUsers[0] : {
+
+  const cookieStore = await cookies();
+  const followingCookieName = `sg_dm_following_${username}`;
+  const existingFollowingCookie = cookieStore.get(followingCookieName)?.value ?? "";
+
+  let storedFollowingUsers: StoredFollowingUser[] = [];
+
+  if (existingFollowingCookie) {
+    try {
+      storedFollowingUsers = JSON.parse(
+        decodeURIComponent(existingFollowingCookie),
+      ) as StoredFollowingUser[];
+    } catch {
+      storedFollowingUsers = [];
+    }
+  }
+
+  if (storedFollowingUsers.length === 0 && hasFollowing) {
+    const sorted = [...data.followingSample].sort((a, b) => {
+      const hashA = hashString(a.username);
+      const hashB = hashString(b.username);
+      if (hashA === hashB) {
+        return a.username.localeCompare(b.username);
+      }
+      return hashA - hashB;
+    });
+
+    const sliced = sorted.slice(0, 15);
+
+    storedFollowingUsers = sliced.map((user) => ({
+      id: String(user.id),
+      username: user.username,
+      profilePicUrl: user.profilePicUrl,
+    }));
+  }
+
+  const followingUsers = storedFollowingUsers;
+
+  const chatUserFromList = followingUsers.find(
+    (user) => user.username === chatId,
+  );
+  const chatUserFallback = followingUsers.length > 0 ? followingUsers[0] : null;
+  const chatUser = chatUserFromList ?? chatUserFallback ?? {
     id: chatId,
     username: chatId,
     fullName: chatId,
     profilePicUrl: profile.profilePicUrl,
   };
-  
+
+  const templateSeed = `${username}-${chatUser.username}-chat-template`;
+  const chosenTemplate = getDeterministicChatTemplate(templateSeed);
+
   // Garantir que estamos usando o primeiro usuário da lista ordenada
   // Se o chatId (username) não corresponder ao primeiro, ainda assim usamos o primeiro
   // para manter consistência com a lista de DM
@@ -185,9 +279,11 @@ export default async function ChatPage({ params }: { params: PageParams | Promis
 
         {/* Área de Chat */}
         <ChatMessages
-          previousMessages={previousMessages}
-          chatMessages={chatMessages}
+          previousMessages={chosenTemplate.previous}
+          chatMessages={chosenTemplate.main}
           username={username}
+          otherUserProfilePicUrl={chatUser.profilePicUrl}
+          otherUserUsername={chatUser.username}
         />
 
         {/* Barra de Input */}

@@ -1,6 +1,7 @@
 'use client';
 
 import { useRef, useEffect, useState } from 'react';
+import Image from "next/image";
 import AccessPopup from './access-popup';
 
 interface ChatMessage {
@@ -14,9 +15,17 @@ interface ChatMessagesProps {
   previousMessages: ChatMessage[];
   chatMessages: ChatMessage[];
   username?: string;
+  otherUserProfilePicUrl?: string;
+  otherUserUsername?: string;
 }
 
-export default function ChatMessages({ previousMessages, chatMessages, username }: ChatMessagesProps) {
+export default function ChatMessages({
+  previousMessages,
+  chatMessages,
+  username,
+  otherUserProfilePicUrl,
+  otherUserUsername,
+}: ChatMessagesProps) {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [showPopup, setShowPopup] = useState(false);
   const [hasScrolledToTop, setHasScrolledToTop] = useState(false);
@@ -69,20 +78,30 @@ export default function ChatMessages({ previousMessages, chatMessages, username 
     if (msg.type === 'other') {
       return (
         <div key={`other-${index}`} className="flex items-end gap-2">
-          <div className="h-8 w-8 rounded-full bg-gray-300 flex items-center justify-center shrink-0">
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="white"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-              <circle cx="12" cy="7" r="4" />
-            </svg>
+          <div className="h-8 w-8 rounded-full bg-gray-300 flex items-center justify-center shrink-0 overflow-hidden">
+            {otherUserProfilePicUrl ? (
+              <Image
+                src={otherUserProfilePicUrl}
+                alt={otherUserUsername ?? "Foto de perfil"}
+                width={32}
+                height={32}
+                className="h-full w-full object-cover"
+              />
+            ) : (
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="white"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                <circle cx="12" cy="7" r="4" />
+              </svg>
+            )}
           </div>
           {msg.text === 'voice' ? (
             <div
