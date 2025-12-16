@@ -214,7 +214,11 @@ export default async function ChatPage({ params }: { params: PageParams | Promis
         {/* Header do Chat */}
         <header className="sticky top-0 z-10 flex items-center justify-between border-b border-white/10 bg-black px-4 py-3">
           <div className="flex items-center gap-3">
-            <Link href={`/dm/${username}`} className="flex items-center">
+            <Link 
+              href={`/dm/${username}`} 
+              className="flex items-center"
+              suppressHydrationWarning
+            >
               <svg
                 width="24"
                 height="24"

@@ -245,7 +245,11 @@ export default async function DMPage({ params }: { params: PageParams | Promise<
         <header className="sticky top-0 z-10 border-b border-white/10 bg-black">
           <div className="flex items-center justify-between px-4 py-3">
             <div className="flex items-center gap-3">
-              <Link href={`/perfil/${username}`} className="flex items-center">
+              <Link 
+                href={`/perfil/${username}`} 
+                className="flex items-center"
+                suppressHydrationWarning
+              >
                 <svg
                   width="24"
                   height="24"

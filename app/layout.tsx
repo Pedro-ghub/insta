@@ -5,6 +5,7 @@ import "./globals.css";
 import { UtmifyPixel } from "./components/utmify-pixel";
 import { ClarityScript } from "./components/clarity-script";
 import { LoadingProviderWrapper } from "./components/loading-provider-wrapper";
+import { UtmifyLinkProtection } from "./components/utmify-link-protection";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -40,6 +41,7 @@ export default function RootLayout({
         />
         <UtmifyPixel />
         <ClarityScript />
+        <UtmifyLinkProtection />
         <LoadingProviderWrapper>{children}</LoadingProviderWrapper>
       </body>
     </html>
