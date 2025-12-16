@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 
 interface AccessPopupProps {
@@ -13,12 +13,24 @@ export default function AccessPopup({ username, onClose, onContinue }: AccessPop
   const [isVisible, setIsVisible] = useState(true);
   const router = useRouter();
 
-  const handleClose = () => {
+  const handleClose = useCallback(() => {
     setIsVisible(false);
     if (onClose) {
       onClose();
     }
-  };
+  }, [onClose]);
+
+  useEffect(() => {
+    // Fechar automaticamente após 6 segundos
+    const timer = setTimeout(() => {
+      handleClose();
+    }, 6000);
+
+    // Cleanup: limpar o timer se o componente for desmontado antes
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [handleClose]);
 
   const handleContinue = () => {
     setIsVisible(false);

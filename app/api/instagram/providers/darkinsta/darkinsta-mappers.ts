@@ -1,25 +1,23 @@
 import type { InstagramProfile, FollowingUser } from "../../instagram-scraper";
-import type { HikerProfile, HikerFollowingUser } from "./hiker-schemas";
+import type { DarkInstaUser, DarkInstaFollowingUser } from "./darkinsta-schemas";
 
 const DEFAULT_PROFILE_PIC =
   "https://static.cdninstagram.com/rsrc.php/v3/y-/r/yCE2ef5JhSq.png";
 
-export function mapHikerProfileToInstagramProfile(
-  profile: HikerProfile,
-): InstagramProfile {
+export function mapDarkInstaUserToProfile(user: DarkInstaUser): InstagramProfile {
   return {
-    id: profile.pk,
-    username: profile.username,
-    fullName: profile.full_name || profile.username,
-    biography: profile.biography || "",
+    id: user.id || user.pk || "",
+    username: user.username,
+    fullName: user.full_name || user.username,
+    biography: user.biography || "",
     profilePicUrl:
-      profile.profile_pic_url_hd ||
-      profile.profile_pic_url ||
+      user.hd_profile_pic_url_info?.url ||
+      user.profile_pic_url ||
       DEFAULT_PROFILE_PIC,
-    followerCount: profile.follower_count ?? null,
-    followingCount: profile.following_count ?? null,
-    postCount: profile.media_count ?? null,
-    isPrivate: Boolean(profile.is_private),
+    followerCount: user.follower_count ?? null,
+    followingCount: user.following_count ?? null,
+    postCount: user.media_count ?? null,
+    isPrivate: Boolean(user.is_private),
   };
 }
 
@@ -33,19 +31,16 @@ function hashString(str: string): number {
   return Math.abs(hash);
 }
 
-export function mapHikerFollowingToUsers(
-  users: HikerFollowingUser[],
+export function mapDarkInstaFollowingToUsers(
+  users: DarkInstaFollowingUser[],
   sampleSize: number = 10,
 ): FollowingUser[] {
   const mapped = users
     .map((user) => ({
-      id: user.id || user.pk,
-      username: user.username,
-      fullName: user.full_name || user.username,
-      profilePicUrl:
-        user.profile_pic_url_hd ||
-        user.profile_pic_url ||
-        DEFAULT_PROFILE_PIC,
+      id: user.id || user.pk || "",
+      username: user.username || "",
+      fullName: user.full_name || user.username || "",
+      profilePicUrl: user.profile_pic_url || DEFAULT_PROFILE_PIC,
       isPrivate: Boolean(user.is_private),
       isVerified: Boolean(user.is_verified),
     }))
@@ -62,8 +57,4 @@ export function mapHikerFollowingToUsers(
 
   return sorted.slice(0, sampleSize);
 }
-
-
-
-
 

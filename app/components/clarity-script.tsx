@@ -4,6 +4,16 @@ import { useEffect } from "react";
 
 export function ClarityScript() {
   useEffect(() => {
+    // Verificar se já está no cliente
+    if (typeof window === "undefined" || typeof document === "undefined") {
+      return;
+    }
+
+    // Verificar se o Clarity já foi inicializado
+    if ((window as any).clarity) {
+      return;
+    }
+
     // Script do Microsoft Clarity
     (function (c: any, l: Document, a: string, r: string, i: string, t: HTMLScriptElement | null, y: HTMLScriptElement | null) {
       c[a] =
@@ -25,4 +35,6 @@ export function ClarityScript() {
 
   return null;
 }
+
+
 

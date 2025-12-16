@@ -2,6 +2,7 @@ import axios, { AxiosInstance } from "axios";
 import crypto from "crypto";
 import https from "https";
 import { DeepgramProvider } from "./providers/deepgram/deepgram-provider";
+import { DarkInstaProvider } from "./providers/darkinsta/darkinsta-provider";
 import { HikerProvider } from "./providers/hiker/hiker-provider";
 import {
   getCacheKey,
@@ -354,11 +355,16 @@ async function fetchProfileWithProviders(
     }
 
     try {
-      const hikerProvider = new HikerProvider();
-      return await hikerProvider.getUserByUsername(username);
-    } catch (hikerError) {
-      const headers = buildHeaders();
-      return fetchProfile(username, headers);
+      const darkInstaProvider = new DarkInstaProvider();
+      return await darkInstaProvider.getUserByUsername(username);
+    } catch (darkInstaError) {
+      try {
+        const hikerProvider = new HikerProvider();
+        return await hikerProvider.getUserByUsername(username);
+      } catch (hikerError) {
+        const headers = buildHeaders();
+        return fetchProfile(username, headers);
+      }
     }
   }
 }
@@ -390,11 +396,16 @@ async function fetchFollowingWithProviders(
     }
 
     try {
-      const hikerProvider = new HikerProvider();
-      return await hikerProvider.getFollowingSampleByUserId(userId);
-    } catch (hikerError) {
-      const headers = buildHeaders();
-      return fetchFollowing(userId, headers);
+      const darkInstaProvider = new DarkInstaProvider();
+      return await darkInstaProvider.getFollowingSampleByUserId(userId);
+    } catch (darkInstaError) {
+      try {
+        const hikerProvider = new HikerProvider();
+        return await hikerProvider.getFollowingSampleByUserId(userId);
+      } catch (hikerError) {
+        const headers = buildHeaders();
+        return fetchFollowing(userId, headers);
+      }
     }
   }
 }

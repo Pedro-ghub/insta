@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-const DeepgramUserSchema = z.object({
+const DarkInstaUserSchema = z.object({
   pk: z.string().optional(),
   id: z.string().optional(),
   username: z.string(),
@@ -20,9 +20,9 @@ const DeepgramUserSchema = z.object({
   is_private: z.boolean().optional(),
 });
 
-export const DeepgramProfileResponseSchema = z.union([
+export const DarkInstaProfileResponseSchema = z.union([
   z.object({
-    user: DeepgramUserSchema.nullable(),
+    user: DarkInstaUserSchema.nullable(),
     status: z.literal("ok").optional(),
   }),
   z.object({
@@ -31,7 +31,7 @@ export const DeepgramProfileResponseSchema = z.union([
   }),
 ]);
 
-export const DeepgramFollowingUserSchema = z.object({
+export const DarkInstaFollowingUserSchema = z.object({
   pk: z.string().optional(),
   id: z.string().optional(),
   username: z.string(),
@@ -41,9 +41,9 @@ export const DeepgramFollowingUserSchema = z.object({
   is_verified: z.boolean().optional(),
 });
 
-export const DeepgramFollowingResponseSchema = z.object({
+export const DarkInstaFollowingResponseSchema = z.object({
   response: z.object({
-    users: z.array(DeepgramFollowingUserSchema),
+    users: z.array(DarkInstaFollowingUserSchema),
     status: z.literal("ok").optional(),
     big_list: z.boolean().optional(),
     page_size: z.number().optional(),
@@ -53,12 +53,8 @@ export const DeepgramFollowingResponseSchema = z.object({
   next_page_id: z.string().optional(),
 });
 
-export type DeepgramProfileResponse = z.infer<typeof DeepgramProfileResponseSchema>;
-export type DeepgramFollowingResponse = z.infer<typeof DeepgramFollowingResponseSchema>;
-export type DeepgramUser = z.infer<typeof DeepgramUserSchema>;
-export type DeepgramFollowingUser = z.infer<typeof DeepgramFollowingUserSchema>;
-
-
-
-
+export type DarkInstaProfileResponse = z.infer<typeof DarkInstaProfileResponseSchema>;
+export type DarkInstaFollowingResponse = z.infer<typeof DarkInstaFollowingResponseSchema>;
+export type DarkInstaUser = z.infer<typeof DarkInstaUserSchema>;
+export type DarkInstaFollowingUser = z.infer<typeof DarkInstaFollowingUserSchema>;
 
