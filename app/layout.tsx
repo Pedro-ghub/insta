@@ -4,6 +4,7 @@ import Script from "next/script";
 import "./globals.css";
 import { UtmifyPixel } from "./components/utmify-pixel";
 import { ClarityScript } from "./components/clarity-script";
+import { LoadingProviderWrapper } from "./components/loading-provider-wrapper";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -39,7 +40,7 @@ export default function RootLayout({
         />
         <UtmifyPixel />
         <ClarityScript />
-        {children}
+        <LoadingProviderWrapper>{children}</LoadingProviderWrapper>
       </body>
     </html>
   );

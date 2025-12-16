@@ -52,3 +52,5 @@ export type HikerFollowingResponse = z.infer<typeof HikerFollowingResponseSchema
 
 
 
+
+
