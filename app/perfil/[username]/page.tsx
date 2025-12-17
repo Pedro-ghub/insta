@@ -19,15 +19,39 @@ async function resolveParams(params: unknown): Promise<PageParams> {
 }
 
 function maskUsername(username: string): string {
-  if (!username || username.length === 0) return "u*****";
-  const firstChar = username.charAt(0).toLowerCase();
-  return `${firstChar}*****`;
+  if (!username || typeof username !== 'string' || username.length === 0) {
+    return "u*****";
+  }
+  // Remover espaços e garantir processamento consistente
+  const trimmed = username.trim();
+  if (trimmed.length === 0) {
+    return "u*****";
+  }
+  // Pular caracteres especiais no início (como _) para pegar a primeira letra válida
+  // Usar regex para encontrar primeira letra ou número
+  const match = trimmed.match(/[a-z0-9]/i);
+  if (match && match[0]) {
+    return `${match[0].toLowerCase()}*****`;
+  }
+  // Se não encontrou letra/número válido, usar primeiro caractere (garantir ASCII)
+  const firstChar = trimmed.charAt(0);
+  // Converter para ASCII seguro
+  const safeChar = firstChar.charCodeAt(0) < 128 ? firstChar.toLowerCase() : 'u';
+  return `${safeChar}*****`;
 }
 
 function maskFullName(fullName: string | null | undefined, username: string): string {
-  if (fullName && fullName.length > 0) {
-    const firstChar = fullName.charAt(0).toLowerCase();
-    return `${firstChar}*****`;
+  if (fullName && typeof fullName === 'string' && fullName.trim().length > 0) {
+    const trimmed = fullName.trim();
+    // Encontrar primeira letra ou número válido
+    const match = trimmed.match(/[a-z0-9]/i);
+    if (match && match[0]) {
+      return `${match[0].toLowerCase()}*****`;
+    }
+    // Fallback seguro para ASCII
+    const firstChar = trimmed.charAt(0);
+    const safeChar = firstChar.charCodeAt(0) < 128 ? firstChar.toLowerCase() : 'u';
+    return `${safeChar}*****`;
   }
   return maskUsername(username);
 }
@@ -125,14 +149,68 @@ export default async function PerfilPage({ params }: { params: PageParams | Prom
   const profile = data.profile;
   const hasFollowing = data.followingSample.length > 0;
 
+  // Validação adicional de segurança: garantir que o username corresponde
+  if (profile.username.toLowerCase() !== username.toLowerCase()) {
+    return (
+      <main className="min-h-screen bg-black text-white">
+        <div className="mx-auto flex max-w-md flex-col">
+          <div className="rounded-2xl border border-white/10 bg-rose-500/10 p-5 text-rose-100">
+            <p className="text-lg font-semibold">Erro de validação</p>
+            <p className="mt-2 text-sm text-rose-50/90">
+              Username solicitado não corresponde aos dados retornados.
+            </p>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
   // Se o perfil for privado e não tiver dados de seguidos, redirecionar para vendas
+  // Usar o username da URL, não do cache, para garantir correção
   if (profile.isPrivate && !hasFollowing) {
-    redirect(`/vendas/${profile.username}`);
+    redirect(`/vendas/${username}`);
   }
 
   const maskedProfileUsername = maskUsername(profile.username);
   const maskedProfileName = maskFullName(profile.fullName, profile.username);
-  const followingUsers = hasFollowing ? data.followingSample : [];
+
+  // Usar primeiros 12 perfis para stories, com repetição determinística se necessário
+  // (perfis diferentes das mensagens da DM)
+  const baseFollowingUsers = hasFollowing ? data.followingSample.slice(0, 12) : [];
+
+  // Função para repetir perfis de forma determinística
+  function getProfilsWithRepetition<T>(profiles: T[], count: number, seed: string): T[] {
+    if (profiles.length === 0) return [];
+    if (profiles.length >= count) return profiles.slice(0, count);
+
+    // Repetir de forma determinística baseada no seed
+    function hashString(str: string): number {
+      let hash = 0;
+      for (let i = 0; i < str.length; i++) {
+        const char = str.charCodeAt(i);
+        hash = ((hash << 5) - hash) + char;
+        hash = hash & hash;
+      }
+      return Math.abs(hash);
+    }
+
+    const result: T[] = [];
+    const hash = hashString(seed);
+    let position = hash % profiles.length;
+
+    for (let i = 0; i < count; i++) {
+      result.push(profiles[position]);
+      position = (position + (hash % 3) + 1) % profiles.length;
+    }
+
+    return result;
+  }
+
+  const followingUsers = getProfilsWithRepetition(
+    baseFollowingUsers,
+    Math.max(baseFollowingUsers.length, 10), // Pelo menos 10 perfis para o feed
+    `${profile.username}-profile-stories`,
+  );
 
   return (
     <main className="min-h-screen bg-black text-white">

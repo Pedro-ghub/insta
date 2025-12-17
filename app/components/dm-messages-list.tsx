@@ -3,6 +3,8 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useLoading } from "../contexts/loading-context";
 import AccessPopup from "./access-popup";
 interface Message {
   user: {
@@ -34,12 +36,22 @@ function maskUsername(username: string): string {
 export default function DMMessagesList({ messages, username }: DMMessagesListProps) {
   const [showPopup, setShowPopup] = useState(false);
   const [hasShownOnScrollEnd, setHasShownOnScrollEnd] = useState(false);
+  const router = useRouter();
+  const { setLoading } = useLoading();
 
   const handleMessageClick = (index: number) => {
     // Se não for o primeiro (índice 0), mostrar popup
     if (index !== 0) {
       setShowPopup(true);
     }
+  };
+
+  const handleFirstMessageClick = (e: React.MouseEvent, firstUserUsername: string) => {
+    e.preventDefault();
+    // Ativar loading antes da navegação
+    setLoading(true);
+    // Navegar - o loading será desativado quando a página de destino carregar
+    router.push(`/dm/${username}/chat/${firstUserUsername}`);
   };
 
   const handleScroll: React.UIEventHandler<HTMLDivElement> = (event) => {
@@ -65,31 +77,19 @@ export default function DMMessagesList({ messages, username }: DMMessagesListPro
           const className = "flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-white/5 transition";
 
           // Lógica de exibição:
-          // - Índices 0, 1, 2: foto sem blur, mensagem sem blur
-          // - Índices 3, 4: foto com blur + cadeado, mensagem sem blur
-          // - Índices 5+: foto sem blur, mensagem com blur
-          const isFirstThree = index < 3;
-          const isFourthOrFifth = index === 3 || index === 4;
+          // - Primeiras 5 fotos de perfil (índices 0-4): com blur sutil
+          // - Demais fotos: sem blur
+          // - Mensagens: a partir do índice 5, mensagem com blur
+          const isFirstFive = index < 5;
           const isSixthAndBeyond = index >= 5;
 
           const content = (
             <>
               <div className="relative shrink-0">
-                {isFirstThree || isSixthAndBeyond ? (
-                  // Primeiros 3 e a partir do 6º: foto sem blur
-                  <div className="h-12 w-12 rounded-full overflow-hidden">
-                    <Image
-                      src={msg.user.profilePicUrl}
-                      alt={maskUsername(msg.user.username)}
-                      width={48}
-                      height={48}
-                      className="h-full w-full object-cover"
-                    />
-                  </div>
-                ) : (
-                  // 4º e 5º: foto com blur + cadeado
+                {isFirstFive ? (
+                  // Primeiras 5 fotos: com blur sutil e ícone de cadeado
                   <div className="h-12 w-12 rounded-full overflow-hidden relative">
-                    <div className="h-full w-full rounded-full overflow-hidden blur-md">
+                    <div className="h-full w-full rounded-full overflow-hidden blur-xs">
                       <Image
                         src={msg.user.profilePicUrl}
                         alt={maskUsername(msg.user.username)}
@@ -100,23 +100,35 @@ export default function DMMessagesList({ messages, username }: DMMessagesListPro
                     </div>
                     <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
                       <svg
-                        width="24"
-                        height="24"
+                        width="14"
+                        height="14"
                         viewBox="0 0 24 24"
                         fill="none"
                         stroke="white"
                         strokeWidth="2"
                         strokeLinecap="round"
                         strokeLinejoin="round"
+                        className="drop-shadow-lg opacity-80"
                       >
                         <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
                         <path d="M7 11V7a5 5 0 0 1 10 0v4" />
                       </svg>
                     </div>
                   </div>
+                ) : (
+                  // Demais fotos: sem blur
+                  <div className="h-12 w-12 rounded-full overflow-hidden">
+                    <Image
+                      src={msg.user.profilePicUrl}
+                      alt={maskUsername(msg.user.username)}
+                      width={48}
+                      height={48}
+                      className="h-full w-full object-cover"
+                    />
+                  </div>
                 )}
                 {msg.hasOnlineIndicator && (
-                  <div className={`absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 ${isFirstThree ? "border-black" : "border-white"} ${msg.isOrangeIndicator ? "bg-orange-500" : "bg-green-500"}`} />
+                  <div className={`absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 ${isFirstFive ? "border-white" : "border-black"} ${msg.isOrangeIndicator ? "bg-orange-500" : "bg-green-500"}`} />
                 )}
               </div>
               <div className="flex-1 min-w-0">
@@ -150,14 +162,12 @@ export default function DMMessagesList({ messages, username }: DMMessagesListPro
           return (
             <div key={`msg-${msg.user.id}-${index}`}>
               {isFirst ? (
-                <Link
-                  href={`/dm/${username}/chat/${firstUserUsername}`}
-                  onClick={() => handleMessageClick(index)}
+                <div
+                  onClick={(e) => handleFirstMessageClick(e, firstUserUsername)}
                   className={className}
-                  suppressHydrationWarning
                 >
                   {content}
-                </Link>
+                </div>
               ) : (
                 <div
                   onClick={() => handleMessageClick(index)}

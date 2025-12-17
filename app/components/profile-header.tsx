@@ -20,7 +20,7 @@ export default function ProfileHeader({ username }: ProfileHeaderProps) {
   return (
     <>
       <header className="sticky top-0 z-10 flex items-center justify-between border-b border-white/10 bg-black px-4 py-3">
-        <Link href="/" className="flex items-center">
+        <Link href="/" className="flex items-center" suppressHydrationWarning>
           <svg
             width="24"
             height="24"
@@ -53,7 +53,7 @@ export default function ProfileHeader({ username }: ProfileHeaderProps) {
             />
             <span className="absolute -right-1 -top-1 flex h-2 w-2 items-center justify-center rounded-full bg-red-500"></span>
           </div>
-          <Link href={`/dm/${username}`} className="relative">
+          <Link href={`/dm/${username}`} className="relative" suppressHydrationWarning>
             <Image
               src="https://www.deepgram.online/home%20-%20feed/icones/enviar.svg"
               alt="Mensagens"

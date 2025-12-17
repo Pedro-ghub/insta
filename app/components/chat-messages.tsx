@@ -38,7 +38,7 @@ export default function ChatMessages({
     const scrollToBottom = () => {
       container.scrollTop = container.scrollHeight;
     };
-    
+
     // Aguardar renderização completa antes de fazer scroll
     setTimeout(scrollToBottom, 100);
     setTimeout(scrollToBottom, 300);
@@ -47,11 +47,11 @@ export default function ChatMessages({
       const scrollTop = container.scrollTop;
       const scrollHeight = container.scrollHeight;
       const clientHeight = container.clientHeight;
-      
+
       // Calcular a posição onde começam as mensagens principais (sem blur)
       // As mensagens anteriores têm blur, então se scrollar muito para cima, mostrar popup
       const threshold = 200; // Distância do topo em pixels
-      
+
       if (scrollTop < threshold && !hasScrolledToTop) {
         setHasScrolledToTop(true);
         setShowPopup(true);
@@ -76,17 +76,38 @@ export default function ChatMessages({
     const voiceClickHandler = msg.text === 'voice' ? handleBlurredClick : clickHandler;
 
     if (msg.type === 'other') {
+      // Para mensagens principais, contar quantas mensagens "other" vieram antes desta
+      const otherMessagesBeforeThis = isPrevious
+        ? 0
+        : chatMessages.slice(0, index).filter(m => m.type === 'other').length;
+
+      // Aplicar blur nas primeiras 5 fotos de perfil das mensagens principais (não anteriores)
+      // E também aplicar blur em todas as fotos das mensagens anteriores
+      const shouldBlurProfilePic = isPrevious || (!isPrevious && otherMessagesBeforeThis < 5);
+
       return (
         <div key={`other-${index}`} className="flex items-end gap-2">
           <div className="h-8 w-8 rounded-full bg-gray-300 flex items-center justify-center shrink-0 overflow-hidden">
             {otherUserProfilePicUrl ? (
-              <Image
-                src={otherUserProfilePicUrl}
-                alt={otherUserUsername ?? "Foto de perfil"}
-                width={32}
-                height={32}
-                className="h-full w-full object-cover"
-              />
+              shouldBlurProfilePic ? (
+                <div className="h-full w-full rounded-full overflow-hidden blur-xs">
+                  <Image
+                    src={otherUserProfilePicUrl}
+                    alt={otherUserUsername ?? "Foto de perfil"}
+                    width={32}
+                    height={32}
+                    className="h-full w-full object-cover"
+                  />
+                </div>
+              ) : (
+                <Image
+                  src={otherUserProfilePicUrl}
+                  alt={otherUserUsername ?? "Foto de perfil"}
+                  width={32}
+                  height={32}
+                  className="h-full w-full object-cover"
+                />
+              )
             ) : (
               <svg
                 width="16"

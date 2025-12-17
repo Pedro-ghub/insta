@@ -47,6 +47,33 @@ function hashString(str: string): number {
   return Math.abs(hash);
 }
 
+// Função para obter uma lista de perfis com repetição determinística
+function getProfilsWithRepetition(
+  allProfiles: StoredFollowingUser[],
+  count: number,
+  seed: string,
+): StoredFollowingUser[] {
+  if (allProfiles.length === 0) return [];
+
+  // Se temos perfis suficientes, retornar apenas o slice necessário
+  if (allProfiles.length >= count) {
+    return allProfiles.slice(0, count);
+  }
+
+  // Se precisamos repetir, fazer de forma determinística
+  const result: StoredFollowingUser[] = [];
+  const hash = hashString(seed);
+  let position = hash % allProfiles.length;
+
+  for (let i = 0; i < count; i++) {
+    result.push(allProfiles[position]);
+    // Avançar de forma determinística (próximo + offset baseado no seed)
+    position = (position + (hash % 3) + 1) % allProfiles.length;
+  }
+
+  return result;
+}
+
 function getDeterministicTime(seed: string): string {
   const times = [
     "25 min",
@@ -159,9 +186,26 @@ export default async function DMPage({ params }: { params: PageParams | Promise<
   const profile = data.profile;
   const hasFollowing = data.followingSample.length > 0;
 
+  // Validação adicional de segurança: garantir que o username corresponde
+  if (profile.username.toLowerCase() !== username.toLowerCase()) {
+    return (
+      <main className="min-h-screen bg-black text-white">
+        <div className="mx-auto flex max-w-md flex-col">
+          <div className="rounded-2xl border border-white/10 bg-rose-500/10 p-5 text-rose-100">
+            <p className="text-lg font-semibold">Erro de validação</p>
+            <p className="mt-2 text-sm text-rose-50/90">
+              Username solicitado não corresponde aos dados retornados.
+            </p>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
   // Se o perfil for privado e não tiver dados de seguidos, redirecionar para vendas
+  // Usar o username da URL, não do cache, para garantir correção
   if (profile.isPrivate && !hasFollowing) {
-    redirect(`/vendas/${profile.username}`);
+    redirect(`/vendas/${username}`);
   }
 
   const maskedProfileName = maskFullName(profile.fullName, profile.username);
@@ -192,7 +236,9 @@ export default async function DMPage({ params }: { params: PageParams | Promise<
       return hashA - hashB;
     });
 
-    const sliced = sorted.slice(0, 15);
+    // Separar: últimos 13 perfis para mensagens (índices 12-24 do followingSample)
+    // Stories usarão os primeiros 12 (índices 0-11)
+    const sliced = sorted.slice(12, 25); // Usar perfis diferentes para mensagens
 
     storedFollowingUsers = sliced.map((user) => ({
       id: String(user.id),
@@ -201,7 +247,27 @@ export default async function DMPage({ params }: { params: PageParams | Promise<
     }));
   }
 
-  const followingUsers = storedFollowingUsers;
+  // Obter perfis para mensagens com repetição determinística se necessário
+  const followingUsers = getProfilsWithRepetition(
+    storedFollowingUsers,
+    15,
+    `${username}-messages`,
+  );
+
+  // Separar perfis para stories (primeiros 12, com repetição determinística se necessário)
+  const storiesProfiles = hasFollowing
+    ? data.followingSample.slice(0, 12).map((user) => ({
+      id: String(user.id),
+      username: user.username,
+      profilePicUrl: user.profilePicUrl,
+    }))
+    : [];
+
+  const storiesFollowingUsers = getProfilsWithRepetition(
+    storiesProfiles,
+    7, // Para exibir nos stories
+    `${username}-stories`,
+  );
 
   // Garantir que temos pelo menos um usuário antes de gerar mensagens
   if (followingUsers.length === 0) {
@@ -349,8 +415,8 @@ export default async function DMPage({ params }: { params: PageParams | Promise<
               <p className="max-w-[70px] truncate text-xs text-white">{profile.username}</p>
             </div>
 
-            {/* Stories dos seguidos com notas */}
-            {followingUsers.slice(0, 7).map((user, index) => {
+            {/* Stories dos seguidos com notas - usando perfis diferentes das mensagens */}
+            {storiesFollowingUsers.slice(0, 7).map((user, index) => {
               const noteSeed = `${username}-${user.id}-${index}-note`;
               const noteText = getDeterministicNote(noteSeed);
               const isWideNote = index >= 5; // Últimos 2 com nota mais larga

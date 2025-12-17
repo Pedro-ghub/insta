@@ -6,7 +6,7 @@ import {
   mapDarkInstaFollowingToUsers,
 } from "./darkinsta-mappers";
 
-const SAMPLE_SIZE = 10;
+const SAMPLE_SIZE = 25; // Máximo de perfis disponíveis
 
 export class DarkInstaProvider implements InstagramProvider {
   private client: DarkInstaClient;
@@ -34,4 +34,5 @@ export class DarkInstaProvider implements InstagramProvider {
     return mapDarkInstaFollowingToUsers(response.response.users, SAMPLE_SIZE);
   }
 }
+
 

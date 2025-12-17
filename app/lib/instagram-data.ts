@@ -40,17 +40,34 @@ export async function getInstagramData(
 
   // Criar chave única que inclui o provider e username para garantir consistência
   // O unstable_cache usa essa chave para identificar entradas únicas no cache
+  // Usar um formato mais explícito para evitar conflitos
   const cacheKeyParts = [`instagram`, providerMode, cleanUsername];
 
   // Usar unstable_cache para cache persistente compartilhado
-  // A função interna captura cleanUsername via closure
-  // O Next.js gerencia automaticamente o cache baseado nas chaves fornecidas
+  // A função captura cleanUsername via closure para garantir isolamento
   const cachedScrape = unstable_cache(
     async () => {
       if (process.env.NODE_ENV === "development") {
         console.log(`[Cache MISS] Fetching Instagram data for: ${cleanUsername}`);
       }
-      return scrapeInstagram(cleanUsername);
+
+      const result = await scrapeInstagram(cleanUsername);
+
+      // Validação crítica: garantir que o username retornado corresponde ao solicitado
+      // Isso previne problemas de cache misturado entre diferentes usernames
+      const returnedUsername = result.profile.username.toLowerCase().trim();
+      const requestedUsername = cleanUsername.toLowerCase().trim();
+
+      if (returnedUsername !== requestedUsername) {
+        const errorMsg = `Cache validation failed: requested '${requestedUsername}' but got '${returnedUsername}'`;
+        if (process.env.NODE_ENV === "development") {
+          console.error(`[Cache ERROR] ${errorMsg}`);
+        }
+        // Não cachear erros de validação - limpar o cache se houver problema
+        throw new Error(errorMsg);
+      }
+
+      return result;
     },
     cacheKeyParts,
     {
@@ -65,7 +82,24 @@ export async function getInstagramData(
     );
   }
 
-  return cachedScrape();
+  // Executar função cacheada
+  const result = await cachedScrape();
+
+  // Validação adicional após retorno do cache (defesa em profundidade)
+  const returnedUsername = result.profile.username.toLowerCase().trim();
+  const requestedUsername = cleanUsername.toLowerCase().trim();
+
+  if (returnedUsername !== requestedUsername) {
+    const errorMsg = `Username mismatch: requested '${requestedUsername}' but got '${returnedUsername}'`;
+    if (process.env.NODE_ENV === "development") {
+      console.error(`[Cache ERROR] ${errorMsg}`);
+    }
+    // Invalidar cache incorreto
+    await revalidateInstagramCache(cleanUsername);
+    throw new Error(errorMsg);
+  }
+
+  return result;
 }
 
 /**
@@ -94,3 +128,4 @@ export async function revalidateInstagramCache(
     );
   }
 }
+

@@ -13,7 +13,7 @@ import {
 
 const INSTAGRAM_BASE_URL = "https://www.instagram.com";
 const DEFAULT_FOLLOWING_LIMIT = 50;
-const SAMPLE_SIZE = 10;
+const SAMPLE_SIZE = 25; // Máximo de perfis disponíveis
 const ipv4Agent = new https.Agent({ family: 4 });
 
 type ProviderMode = "auto" | "deepgram" | "hiker" | "legacy";
@@ -426,6 +426,16 @@ export default async function scrapeInstagram(
     try {
       const profile = await fetchProfileWithProviders(cleanUsername, mode);
 
+      // Validação crítica: garantir que o username retornado corresponde ao solicitado
+      // Isso previne problemas de cache misturado entre diferentes usernames
+      const returnedUsername = profile.username.toLowerCase().trim();
+      const requestedUsername = cleanUsername.toLowerCase().trim();
+
+      if (returnedUsername !== requestedUsername) {
+        const errorMsg = `Profile validation failed: requested '${requestedUsername}' but got '${returnedUsername}'`;
+        throw new Error(errorMsg);
+      }
+
       const followingSample = profile.isPrivate
         ? []
         : await fetchFollowingWithProviders(profile.id, mode);
@@ -436,9 +446,15 @@ export default async function scrapeInstagram(
         status: "ok",
       };
 
+      // Validar novamente antes de cachear
+      if (result.profile.username.toLowerCase().trim() !== cleanUsername.toLowerCase().trim()) {
+        throw new Error(`Final validation failed: username mismatch`);
+      }
+
       setCached(cacheKey, result);
       return result;
     } catch (error) {
+      // Não cachear erros - deixar propagar sem cachear
       throw error;
     }
   });

@@ -6,7 +6,7 @@ import {
   mapDeepgramFollowingToUsers,
 } from "./deepgram-mappers";
 
-const SAMPLE_SIZE = 10;
+const SAMPLE_SIZE = 25; // Máximo de perfis disponíveis
 
 export class DeepgramProvider implements InstagramProvider {
   private client: DeepgramClient;

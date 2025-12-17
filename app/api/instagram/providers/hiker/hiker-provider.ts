@@ -6,7 +6,7 @@ import {
   mapHikerFollowingToUsers,
 } from "./hiker-mappers";
 
-const SAMPLE_SIZE = 10;
+const SAMPLE_SIZE = 25; // Máximo de perfis disponíveis
 
 export class HikerProvider implements InstagramProvider {
   private client: HikerClient;
@@ -25,6 +25,7 @@ export class HikerProvider implements InstagramProvider {
     return mapHikerFollowingToUsers(users, SAMPLE_SIZE);
   }
 }
+
 
 
 

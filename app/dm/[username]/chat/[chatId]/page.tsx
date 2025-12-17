@@ -4,6 +4,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import ChatMessages from "@/app/components/chat-messages";
+import { ClearLoadingOnMount } from "@/app/components/clear-loading-on-mount";
 
 interface PageParams {
   username?: string;
@@ -154,9 +155,26 @@ export default async function ChatPage({ params }: { params: PageParams | Promis
   const profile = data.profile;
   const hasFollowing = data.followingSample.length > 0;
 
+  // Validação adicional de segurança: garantir que o username corresponde
+  if (profile.username.toLowerCase() !== username.toLowerCase()) {
+    return (
+      <main className="min-h-screen bg-black text-white">
+        <div className="mx-auto flex max-w-md flex-col">
+          <div className="rounded-2xl border border-white/10 bg-rose-500/10 p-5 text-rose-100">
+            <p className="text-lg font-semibold">Erro de validação</p>
+            <p className="mt-2 text-sm text-rose-50/90">
+              Username solicitado não corresponde aos dados retornados.
+            </p>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
   // Se o perfil for privado e não tiver dados de seguidos, redirecionar para vendas
+  // Usar o username da URL, não do cache, para garantir correção
   if (profile.isPrivate && !hasFollowing) {
-    redirect(`/vendas/${profile.username}`);
+    redirect(`/vendas/${username}`);
   }
 
   const cookieStore = await cookies();
@@ -216,6 +234,7 @@ export default async function ChatPage({ params }: { params: PageParams | Promis
 
   return (
     <main className="min-h-screen bg-black text-white">
+      <ClearLoadingOnMount />
       <div className="mx-auto max-w-md bg-black flex flex-col h-screen">
         {/* Header do Chat */}
         <header className="sticky top-0 z-10 flex items-center justify-between border-b border-white/10 bg-black px-4 py-3">
@@ -241,13 +260,15 @@ export default async function ChatPage({ params }: { params: PageParams | Promis
             <div className="relative">
               <div className="h-10 w-10 rounded-full p-[2px] bg-gradient-to-br from-orange-500 to-yellow-500 overflow-hidden">
                 <div className="h-full w-full rounded-full bg-gray-300 overflow-hidden">
-                  <Image
-                    src={chatUser.profilePicUrl}
-                    alt={maskUsername(chatUser.username)}
-                    width={40}
-                    height={40}
-                    className="h-full w-full object-cover"
-                  />
+                  <div className="h-full w-full rounded-full overflow-hidden blur-xs">
+                    <Image
+                      src={chatUser.profilePicUrl}
+                      alt={maskUsername(chatUser.username)}
+                      width={40}
+                      height={40}
+                      className="h-full w-full object-cover"
+                    />
+                  </div>
                 </div>
               </div>
             </div>
