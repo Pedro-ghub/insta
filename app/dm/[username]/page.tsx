@@ -6,15 +6,20 @@ import { cookies } from "next/headers";
 import DMMessagesList from "@/app/components/dm-messages-list";
 import BottomNavigation from "@/app/components/bottom-navigation";
 import SetDmFollowingCookie from "@/app/components/set-dm-following-cookie";
+import type { StoredFollowingUser } from "@/app/lib/following";
+import {
+  getProfilesWithRepetition,
+  parseStoredFollowingCookie,
+  selectMessageFollowingSample,
+} from "@/app/lib/following";
+import { hashString } from "@/app/lib/chat-templates";
+import {
+  getAccessibleTemplateAssignments,
+  getTemplatePreview,
+} from "@/app/lib/chat-templates/accessible-helpers";
 
 interface PageParams {
   username?: string;
-}
-
-interface StoredFollowingUser {
-  id: string;
-  username: string;
-  profilePicUrl: string;
 }
 
 async function resolveParams(params: unknown): Promise<PageParams> {
@@ -34,44 +39,6 @@ function maskFullName(fullName: string | null | undefined, username: string): st
     return `${firstChar}*****`;
   }
   return maskUsername(username);
-}
-
-// Função para gerar um número determinístico baseado em uma string
-function hashString(str: string): number {
-  let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    const char = str.charCodeAt(i);
-    hash = ((hash << 5) - hash) + char;
-    hash = hash & hash; // Convert to 32bit integer
-  }
-  return Math.abs(hash);
-}
-
-// Função para obter uma lista de perfis com repetição determinística
-function getProfilsWithRepetition(
-  allProfiles: StoredFollowingUser[],
-  count: number,
-  seed: string,
-): StoredFollowingUser[] {
-  if (allProfiles.length === 0) return [];
-
-  // Se temos perfis suficientes, retornar apenas o slice necessário
-  if (allProfiles.length >= count) {
-    return allProfiles.slice(0, count);
-  }
-
-  // Se precisamos repetir, fazer de forma determinística
-  const result: StoredFollowingUser[] = [];
-  const hash = hashString(seed);
-  let position = hash % allProfiles.length;
-
-  for (let i = 0; i < count; i++) {
-    result.push(allProfiles[position]);
-    // Avançar de forma determinística (próximo + offset baseado no seed)
-    position = (position + (hash % 3) + 1) % allProfiles.length;
-  }
-
-  return result;
 }
 
 function getDeterministicTime(seed: string): string {
@@ -157,7 +124,7 @@ export default async function DMPage({ params }: { params: PageParams | Promise<
 
   if (!username) {
     return (
-      <main className="min-h-screen bg-black text-white">
+      <main className="min-h-screen bg-[#0b1014] text-white">
         <div className="mx-auto flex max-w-md flex-col">
           <div className="rounded-2xl border border-white/10 bg-rose-500/10 p-5 text-rose-100">
             <p className="text-lg font-semibold">Username não informado.</p>
@@ -171,7 +138,7 @@ export default async function DMPage({ params }: { params: PageParams | Promise<
   const result = await getProfileData(username);
   if (!result.data) {
     return (
-      <main className="min-h-screen bg-black text-white">
+      <main className="min-h-screen bg-[#0b1014] text-white">
         <div className="mx-auto flex max-w-md flex-col">
           <div className="rounded-2xl border border-white/10 bg-rose-500/10 p-5 text-rose-100">
             <p className="text-lg font-semibold">Não foi possível carregar</p>
@@ -189,7 +156,7 @@ export default async function DMPage({ params }: { params: PageParams | Promise<
   // Validação adicional de segurança: garantir que o username corresponde
   if (profile.username.toLowerCase() !== username.toLowerCase()) {
     return (
-      <main className="min-h-screen bg-black text-white">
+      <main className="min-h-screen bg-[#0b1014] text-white">
         <div className="mx-auto flex max-w-md flex-col">
           <div className="rounded-2xl border border-white/10 bg-rose-500/10 p-5 text-rose-100">
             <p className="text-lg font-semibold">Erro de validação</p>
@@ -214,65 +181,15 @@ export default async function DMPage({ params }: { params: PageParams | Promise<
   const followingCookieName = `sg_dm_following_${username}`;
   const existingFollowingCookie = cookieStore.get(followingCookieName)?.value ?? "";
 
-  let storedFollowingUsers: StoredFollowingUser[] = [];
+  let baseFollowingUsers: StoredFollowingUser[] = parseStoredFollowingCookie(existingFollowingCookie);
 
-  if (existingFollowingCookie) {
-    try {
-      storedFollowingUsers = JSON.parse(
-        decodeURIComponent(existingFollowingCookie),
-      ) as StoredFollowingUser[];
-    } catch {
-      storedFollowingUsers = [];
-    }
+  if (baseFollowingUsers.length === 0 && hasFollowing) {
+    baseFollowingUsers = selectMessageFollowingSample(data.followingSample);
   }
 
-  if (storedFollowingUsers.length === 0 && hasFollowing) {
-    const sorted = [...data.followingSample].sort((a, b) => {
-      const hashA = hashString(a.username);
-      const hashB = hashString(b.username);
-      if (hashA === hashB) {
-        return a.username.localeCompare(b.username);
-      }
-      return hashA - hashB;
-    });
-
-    // Separar: últimos 13 perfis para mensagens (índices 12-24 do followingSample)
-    // Stories usarão os primeiros 12 (índices 0-11)
-    const sliced = sorted.slice(12, 25); // Usar perfis diferentes para mensagens
-
-    storedFollowingUsers = sliced.map((user) => ({
-      id: String(user.id),
-      username: user.username,
-      profilePicUrl: user.profilePicUrl,
-    }));
-  }
-
-  // Obter perfis para mensagens com repetição determinística se necessário
-  const followingUsers = getProfilsWithRepetition(
-    storedFollowingUsers,
-    15,
-    `${username}-messages`,
-  );
-
-  // Separar perfis para stories (primeiros 12, com repetição determinística se necessário)
-  const storiesProfiles = hasFollowing
-    ? data.followingSample.slice(0, 12).map((user) => ({
-      id: String(user.id),
-      username: user.username,
-      profilePicUrl: user.profilePicUrl,
-    }))
-    : [];
-
-  const storiesFollowingUsers = getProfilsWithRepetition(
-    storiesProfiles,
-    7, // Para exibir nos stories
-    `${username}-stories`,
-  );
-
-  // Garantir que temos pelo menos um usuário antes de gerar mensagens
-  if (followingUsers.length === 0) {
+  if (baseFollowingUsers.length === 0) {
     return (
-      <main className="min-h-screen bg-black text-white">
+      <main className="min-h-screen bg-[#0b1014] text-white">
         <div className="mx-auto flex max-w-md flex-col">
           <div className="rounded-2xl border border-white/10 bg-rose-500/10 p-5 text-rose-100">
             <p className="text-lg font-semibold">Não foi possível carregar</p>
@@ -283,39 +200,201 @@ export default async function DMPage({ params }: { params: PageParams | Promise<
     );
   }
 
-  const messages = followingUsers.slice(0, 15).map((user, index) => {
-    // Mensagens geradas de forma determinística por usuário consultado,
-    // mas com sensação de aleatoriedade para cada perfil.
-    const isLocked = index >= 1;
-    const hasGradient = index >= 4;
-    const hasOnlineIndicator = true;
-    const isOrangeIndicator = false;
-    const isBlurred = index >= 5; // A partir do índice 5, mensagem borrada (mais algumas sem blur para aumentar curiosidade)
+  // Separar perfis para stories (primeiros 12, com repetição determinística se necessário)
+  const storiesProfiles = hasFollowing
+    ? data.followingSample.slice(0, 12).map((user) => ({
+      id: String(user.id),
+      username: user.username,
+      profilePicUrl: user.profilePicUrl,
+    }))
+    : [];
 
-    const messageSeed = `${username}-${user.username}-${index}-preview`;
-    const timeSeed = `${username}-${user.username}-${index}-time`;
-    const message = getDeterministicMessage(messageSeed);
-    const hasCameraDot = index !== 2 && index !== 5 && index !== 7;
+  const storiesFollowingUsers = getProfilesWithRepetition(
+    storiesProfiles,
+    7, // Para exibir nos stories
+    `${username}-stories`,
+  );
 
+  type MessagePreview = {
+    user: StoredFollowingUser;
+    message: string;
+    time: string;
+    isBlurred: boolean;
+    isLocked: boolean;
+    hasGradient: boolean;
+    hasOnlineIndicator: boolean;
+    isOrangeIndicator: boolean;
+    hasCameraDot: boolean;
+    isAccessible?: boolean;
+    hasStoryBorder?: boolean;
+  };
+
+  function getDeterministicStoryBorder(seed: string): boolean {
+    // Aproximadamente 65% dos perfis terão borda de story
+    const hash = hashString(seed);
+    return (hash % 100) < 65;
+  }
+
+  function getDeterministicOnlineIndicator(seed: string): boolean {
+    // Aproximadamente 40% dos perfis terão indicador online
+    const hash = hashString(seed);
+    return (hash % 100) < 70;
+  }
+
+  function getDeterministicOrangeIndicator(seed: string): boolean {
+    // Se tiver indicador online, 30% serão laranja (ocupado), 70% verde (online)
+    const hash = hashString(seed);
+    return (hash % 100) < 30;
+  }
+
+  const accessibleAssignments = getAccessibleTemplateAssignments(
+    baseFollowingUsers,
+    `${username}-accessible-chats`,
+  );
+
+  const accessibleMessages: MessagePreview[] = accessibleAssignments.map((assignment, idx) => {
+    const messageSeed = `${username}-${assignment.user.username}-accessible-${idx}`;
+    const storyBorderSeed = `${username}-${assignment.user.username}-story-border-${idx}`;
+    const onlineIndicatorSeed = `${username}-${assignment.user.username}-online-${idx}`;
+    const hasOnline = getDeterministicOnlineIndicator(onlineIndicatorSeed);
     return {
-      user,
-      isLocked,
-      hasGradient,
-      hasOnlineIndicator,
-      isOrangeIndicator,
-      message,
-      isBlurred,
-      hasCameraDot,
-      time: getDeterministicTime(timeSeed),
+      user: assignment.user,
+      message: getTemplatePreview(assignment.templateKey),
+      time: getDeterministicTime(messageSeed),
+      isBlurred: false,
+      isLocked: false,
+      hasGradient: false,
+      hasOnlineIndicator: hasOnline,
+      isOrangeIndicator: hasOnline ? getDeterministicOrangeIndicator(onlineIndicatorSeed) : false,
+      hasCameraDot: false,
+      isAccessible: true,
+      hasStoryBorder: getDeterministicStoryBorder(storyBorderSeed),
     };
   });
 
+  const accessibleUsernames = new Set(accessibleAssignments.map((assignment) => assignment.user.username));
+
+  const remainingUsers = baseFollowingUsers.filter((user) => !accessibleUsernames.has(user.username));
+  const generalCount = Math.max(0, 15 - accessibleMessages.length);
+
+  // Se não houver perfis restantes, usar baseFollowingUsers como fallback
+  // getProfilesWithRepetition já lida com repetições de forma determinística quando necessário
+  const generalUsersSource = remainingUsers.length > 0 ? remainingUsers : baseFollowingUsers;
+  // Sempre tentar criar o número necessário de mensagens gerais
+  // getProfilesWithRepetition vai repetir perfis de forma determinística se necessário
+  const actualGeneralCount = generalUsersSource.length > 0 ? generalCount : 0;
+
+  const generalUsers = getProfilesWithRepetition(
+    generalUsersSource,
+    actualGeneralCount,
+    `${username}-general-messages`,
+  );
+
+  const generalMessagesQueue: MessagePreview[] = generalUsers.map((user, idx) => {
+    const messageSeed = `${username}-${user.username}-general-${idx}`;
+    const timeSeed = `${username}-${user.username}-general-time-${idx}`;
+    const storyBorderSeed = `${username}-${user.username}-story-border-general-${idx}`;
+    const onlineIndicatorSeed = `${username}-${user.username}-online-general-${idx}`;
+    const hasOnline = getDeterministicOnlineIndicator(onlineIndicatorSeed);
+    return {
+      user,
+      message: getDeterministicMessage(messageSeed),
+      time: getDeterministicTime(timeSeed),
+      isBlurred: true,
+      isLocked: true,
+      hasGradient: true,
+      hasOnlineIndicator: hasOnline,
+      isOrangeIndicator: hasOnline ? getDeterministicOrangeIndicator(onlineIndicatorSeed) : false,
+      hasCameraDot: true,
+      isAccessible: false,
+      hasStoryBorder: getDeterministicStoryBorder(storyBorderSeed),
+    };
+  });
+
+  const finalMessages: MessagePreview[] = [];
+  const usedUsernames = new Set<string>();
+
+  // Primeiras 3 mensagens acessíveis
+  accessibleMessages.slice(0, 3).forEach((msg) => {
+    if (!usedUsernames.has(msg.user.username)) {
+      finalMessages.push(msg);
+      usedUsernames.add(msg.user.username);
+    }
+  });
+
+  // Quarta mensagem borrada (mostrar outra conversa bloqueada)
+  if (generalMessagesQueue.length > 0 && finalMessages.length < 15) {
+    const nextMsg = generalMessagesQueue.shift()!;
+    if (!usedUsernames.has(nextMsg.user.username)) {
+      finalMessages.push(nextMsg);
+      usedUsernames.add(nextMsg.user.username);
+    }
+  }
+
+  // Quinta mensagem: outro chat acessível
+  if (accessibleMessages[3] && finalMessages.length < 15) {
+    if (!usedUsernames.has(accessibleMessages[3].user.username)) {
+      finalMessages.push(accessibleMessages[3]);
+      usedUsernames.add(accessibleMessages[3].user.username);
+    }
+  }
+
+  // Demais mensagens (todas borradas) - apenas perfis únicos
+  generalMessagesQueue.forEach((msg) => {
+    if (finalMessages.length >= 15) return;
+    if (!usedUsernames.has(msg.user.username)) {
+      finalMessages.push(msg);
+      usedUsernames.add(msg.user.username);
+    }
+  });
+
+  // Se ainda não temos 15 mensagens, adicionar mais mensagens acessíveis restantes
+  if (finalMessages.length < 15) {
+    accessibleMessages.slice(4).forEach((msg) => {
+      if (finalMessages.length < 15 && !usedUsernames.has(msg.user.username)) {
+        finalMessages.push(msg);
+        usedUsernames.add(msg.user.username);
+      }
+    });
+  }
+
+  // Se ainda não temos 15, usar perfis restantes de baseFollowingUsers que não foram usados
+  if (finalMessages.length < 15) {
+    const unusedUsers = baseFollowingUsers.filter((user) => !usedUsernames.has(user.username));
+    unusedUsers.slice(0, 15 - finalMessages.length).forEach((user, idx) => {
+      if (finalMessages.length < 15) {
+        const messageSeed = `${username}-${user.username}-unused-${idx}`;
+        const timeSeed = `${username}-${user.username}-unused-time-${idx}`;
+        const storyBorderSeed = `${username}-${user.username}-story-border-unused-${idx}`;
+        const onlineIndicatorSeed = `${username}-${user.username}-online-unused-${idx}`;
+        const hasOnline = getDeterministicOnlineIndicator(onlineIndicatorSeed);
+
+        finalMessages.push({
+          user,
+          message: getDeterministicMessage(messageSeed),
+          time: getDeterministicTime(timeSeed),
+          isBlurred: true,
+          isLocked: true,
+          hasGradient: true,
+          hasOnlineIndicator: hasOnline,
+          isOrangeIndicator: hasOnline ? getDeterministicOrangeIndicator(onlineIndicatorSeed) : false,
+          hasCameraDot: true,
+          isAccessible: false,
+          hasStoryBorder: getDeterministicStoryBorder(storyBorderSeed),
+        });
+        usedUsernames.add(user.username);
+      }
+    });
+  }
+
+  const messages = finalMessages.slice(0, 15);
+
   return (
-    <main className="min-h-screen bg-black text-white">
-      <SetDmFollowingCookie username={username} followingUsers={followingUsers} />
-      <div className="mx-auto max-w-md bg-black pb-16">
+    <main className="min-h-screen bg-[#0b1014] text-white">
+      <SetDmFollowingCookie username={username} followingUsers={baseFollowingUsers} />
+      <div className="mx-auto max-w-md bg-[#0b1014] pb-16">
         {/* Header DM */}
-        <header className="sticky top-0 z-10 border-b border-white/10 bg-black">
+        <header className="sticky top-0 z-10 bg-[#0b1014]">
           <div className="flex items-center justify-between px-4 py-3">
             <div className="flex items-center gap-3">
               <Link
@@ -392,7 +471,7 @@ export default async function DMPage({ params }: { params: PageParams | Promise<
         </header>
 
         {/* Stories Section */}
-        <div className="border-b border-white/10 bg-black px-4 py-3">
+        <div className="bg-[#0b1014] px-4 py-3">
           <div className="flex gap-4 overflow-x-auto scrollbar-hide">
             {/* Nota "Conte as novidades" */}
             <div className="flex shrink-0 flex-col items-center gap-1">
@@ -449,8 +528,8 @@ export default async function DMPage({ params }: { params: PageParams | Promise<
         </div>
 
         {/* Mensagens Section */}
-        <div className="bg-black">
-          <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
+        <div className="bg-[#0b1014]">
+          <div className="flex items-center justify-between px-4 py-3">
             <span className="text-base font-semibold text-white">Mensagens</span>
             <span className="text-sm text-blue-500">Pedidos (1)</span>
           </div>

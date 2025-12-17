@@ -16,6 +16,15 @@ function getCacheTTL(): number {
 }
 
 /**
+ * Verifica se as variáveis de ambiente necessárias estão configuradas
+ */
+function hasRequiredEnvVars(): boolean {
+  const sessionId = process.env.IG_SESSIONID;
+  const csrfToken = process.env.IG_CSRFTOKEN;
+  return !!(sessionId && csrfToken);
+}
+
+/**
  * Obtém dados do Instagram com cache persistente usando Next.js unstable_cache.
  * O cache é compartilhado entre todas as páginas e rotas da API, reduzindo
  * chamadas desnecessárias aos provedores externos.
@@ -33,6 +42,16 @@ export async function getInstagramData(
   const cleanUsername = username.replace("@", "").trim().toLowerCase();
   if (!cleanUsername) {
     throw new Error("Username inválido.");
+  }
+
+  // Verificar variáveis de ambiente antes de tentar fazer requisição
+  // Isso evita tentativas desnecessárias e melhora a mensagem de erro
+  if (!hasRequiredEnvVars()) {
+    const errorMessage = "Env IG_SESSIONID e IG_CSRFTOKEN são obrigatórios para acessar os endpoints do Instagram.";
+    if (process.env.NODE_ENV === "development") {
+      console.warn(`[Instagram] ${errorMessage} Configure as variáveis de ambiente no arquivo .env.local`);
+    }
+    throw new Error(errorMessage);
   }
 
   const providerMode = getProviderMode();
@@ -128,5 +147,3 @@ export async function revalidateInstagramCache(
     );
   }
 }
-
-

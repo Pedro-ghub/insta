@@ -19,7 +19,7 @@ export default function ProfileHeader({ username }: ProfileHeaderProps) {
 
   return (
     <>
-      <header className="sticky top-0 z-10 flex items-center justify-between border-b border-white/10 bg-black px-4 py-3">
+      <header className="sticky top-0 z-10 flex items-center justify-between border-b border-white/10 bg-[#0b1014] px-4 py-3">
         <Link href="/" className="flex items-center" suppressHydrationWarning>
           <svg
             width="24"

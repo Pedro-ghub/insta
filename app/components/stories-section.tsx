@@ -66,7 +66,7 @@ export default function StoriesSection({
               <div className="relative cursor-pointer" onClick={handleStoryClick}>
                 {hasStory ? (
                   <div className="story-blur-container h-16 w-16 rounded-full p-[2px] bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-500 overflow-hidden">
-                    <div className="h-full w-full rounded-full bg-black p-0.5 relative overflow-hidden">
+                    <div className="h-full w-full rounded-full bg-[#0b1014] p-0.5 relative overflow-hidden">
                       <div className="h-full w-full rounded-full overflow-hidden">
                         <Image
                           src={user.profilePicUrl}

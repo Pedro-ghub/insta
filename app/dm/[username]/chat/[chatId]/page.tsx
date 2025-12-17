@@ -8,16 +8,16 @@ import { ClearLoadingOnMount } from "@/app/components/clear-loading-on-mount";
 import { getDeterministicChatTemplate, hashString } from "@/app/lib/chat-templates";
 import { getUserCity } from "@/app/lib/location";
 import type { ChatMessage } from "@/app/lib/chat-templates/types";
+import type { StoredFollowingUser } from "@/app/lib/following";
+import { parseStoredFollowingCookie, selectMessageFollowingSample } from "@/app/lib/following";
+import {
+  getAccessibleTemplateAssignments,
+  getTemplateByKey,
+} from "@/app/lib/chat-templates/accessible-helpers";
 
 interface PageParams {
   username?: string;
   chatId?: string;
-}
-
-interface StoredFollowingUser {
-  id: string;
-  username: string;
-  profilePicUrl: string;
 }
 
 async function resolveParams(params: unknown): Promise<PageParams> {
@@ -38,7 +38,7 @@ export default async function ChatPage({ params }: { params: PageParams | Promis
 
   if (!username || !chatId) {
     return (
-      <main className="min-h-screen bg-black text-white">
+      <main className="min-h-screen bg-[#0b1014] text-white">
         <div className="mx-auto flex max-w-md flex-col">
           <div className="rounded-2xl border border-white/10 bg-rose-500/10 p-5 text-rose-100">
             <p className="text-lg font-semibold">Parâmetros inválidos.</p>
@@ -51,7 +51,7 @@ export default async function ChatPage({ params }: { params: PageParams | Promis
   const result = await getProfileData(username);
   if (!result.data) {
     return (
-      <main className="min-h-screen bg-black text-white">
+      <main className="min-h-screen bg-[#0b1014] text-white">
         <div className="mx-auto flex max-w-md flex-col">
           <div className="rounded-2xl border border-white/10 bg-rose-500/10 p-5 text-rose-100">
             <p className="text-lg font-semibold">Não foi possível carregar</p>
@@ -69,7 +69,7 @@ export default async function ChatPage({ params }: { params: PageParams | Promis
   // Validação adicional de segurança: garantir que o username corresponde
   if (profile.username.toLowerCase() !== username.toLowerCase()) {
     return (
-      <main className="min-h-screen bg-black text-white">
+      <main className="min-h-screen bg-[#0b1014] text-white">
         <div className="mx-auto flex max-w-md flex-col">
           <div className="rounded-2xl border border-white/10 bg-rose-500/10 p-5 text-rose-100">
             <p className="text-lg font-semibold">Erro de validação</p>
@@ -92,38 +92,11 @@ export default async function ChatPage({ params }: { params: PageParams | Promis
   const followingCookieName = `sg_dm_following_${username}`;
   const existingFollowingCookie = cookieStore.get(followingCookieName)?.value ?? "";
 
-  let storedFollowingUsers: StoredFollowingUser[] = [];
+  let followingUsers: StoredFollowingUser[] = parseStoredFollowingCookie(existingFollowingCookie);
 
-  if (existingFollowingCookie) {
-    try {
-      storedFollowingUsers = JSON.parse(
-        decodeURIComponent(existingFollowingCookie),
-      ) as StoredFollowingUser[];
-    } catch {
-      storedFollowingUsers = [];
-    }
+  if (followingUsers.length === 0 && hasFollowing) {
+    followingUsers = selectMessageFollowingSample(data.followingSample);
   }
-
-  if (storedFollowingUsers.length === 0 && hasFollowing) {
-    const sorted = [...data.followingSample].sort((a, b) => {
-      const hashA = hashString(a.username);
-      const hashB = hashString(b.username);
-      if (hashA === hashB) {
-        return a.username.localeCompare(b.username);
-      }
-      return hashA - hashB;
-    });
-
-    const sliced = sorted.slice(0, 15);
-
-    storedFollowingUsers = sliced.map((user) => ({
-      id: String(user.id),
-      username: user.username,
-      profilePicUrl: user.profilePicUrl,
-    }));
-  }
-
-  const followingUsers = storedFollowingUsers;
 
   const chatUserFromList = followingUsers.find(
     (user) => user.username === chatId,
@@ -137,7 +110,16 @@ export default async function ChatPage({ params }: { params: PageParams | Promis
   };
 
   const templateSeed = `${username}-${chatUser.username}-chat-template`;
-  const chosenTemplate = getDeterministicChatTemplate(templateSeed);
+  const accessibleAssignments = getAccessibleTemplateAssignments(
+    followingUsers,
+    `${username}-accessible-chats`,
+  );
+  const matchingAccessible = accessibleAssignments.find(
+    (assignment) => assignment.user.username === chatUser.username,
+  );
+  const chosenTemplate = matchingAccessible
+    ? getTemplateByKey(matchingAccessible.templateKey)
+    : getDeterministicChatTemplate(templateSeed);
 
   // Obter cidade do usuário
   let resolvedCity = "Maringá";
@@ -159,11 +141,11 @@ export default async function ChatPage({ params }: { params: PageParams | Promis
   // para manter consistência com a lista de DM
 
   return (
-    <main className="min-h-screen bg-black text-white">
+    <main className="min-h-screen bg-[#0b1014] text-white">
       <ClearLoadingOnMount />
-      <div className="mx-auto max-w-md bg-black flex flex-col h-screen">
+      <div className="mx-auto max-w-md bg-[#0b1014] flex flex-col h-screen">
         {/* Header do Chat */}
-        <header className="sticky top-0 z-10 flex items-center justify-between border-b border-white/10 bg-black px-4 py-3">
+        <header className="sticky top-0 z-10 flex items-center justify-between border-b border-white/10 bg-[#0b1014] px-4 py-3">
           <div className="flex items-center gap-3">
             <Link
               href={`/dm/${username}`}
@@ -184,7 +166,7 @@ export default async function ChatPage({ params }: { params: PageParams | Promis
               </svg>
             </Link>
             <div className="relative">
-              <div className="h-10 w-10 rounded-full p-[2px] bg-gradient-to-br from-orange-500 to-yellow-500 overflow-hidden">
+              <div className="h-10 w-10 rounded-full p-[2px] bg-linear-to-br from-orange-500 to-yellow-500 overflow-hidden">
                 <div className="h-full w-full rounded-full bg-gray-300 overflow-hidden">
                   <div className="h-full w-full rounded-full overflow-hidden blur-xs">
                     <Image
@@ -244,7 +226,7 @@ export default async function ChatPage({ params }: { params: PageParams | Promis
         />
 
         {/* Barra de Input */}
-        <div className="border-t border-white/10 bg-black px-4 py-3">
+        <div className="border-t border-white/10 bg-[#0b1014] px-4 py-3">
           <div className="flex items-center gap-3">
             <svg
               width="24"

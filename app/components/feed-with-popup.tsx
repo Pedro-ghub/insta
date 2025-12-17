@@ -35,11 +35,11 @@ export default function FeedWithPopup({ posts, profileUsername }: FeedWithPopupP
   useEffect(() => {
     const handleScroll = () => {
       if (!feedRef.current) return;
-      
+
       // Contar quantas fotos foram scrolladas (cada post tem aproximadamente 500px)
       const scrollPosition = feedRef.current.scrollTop;
       const postsScrolled = Math.floor(scrollPosition / 500);
-      
+
       if (postsScrolled >= 2) {
         setScrollCount(2);
       }
@@ -67,12 +67,12 @@ export default function FeedWithPopup({ posts, profileUsername }: FeedWithPopupP
     <>
       <div ref={feedRef} className="space-y-6 overflow-y-auto">
         {posts.map((post, index) => (
-          <div key={post.user.id} className="bg-black">
+          <div key={post.user.id} className="bg-[#0b1014]">
             {/* Header do Post */}
             <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
               <div className="flex items-center gap-3">
                 <div className="h-10 w-10 rounded-full overflow-hidden p-[1px] bg-gradient-to-br from-purple-500 to-orange-500">
-                  <div className="h-full w-full rounded-full overflow-hidden bg-black blur-[1px]">
+                  <div className="h-full w-full rounded-full overflow-hidden bg-[#0b1014] blur-[1px]">
                     <Image
                       src={post.user.profilePicUrl}
                       alt={post.user.username}

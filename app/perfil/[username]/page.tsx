@@ -120,7 +120,7 @@ export default async function PerfilPage({ params }: { params: PageParams | Prom
   const username = resolved.username ?? "";
   if (!username) {
     return (
-      <main className="min-h-screen bg-black text-white">
+      <main className="min-h-screen bg-[#0b1014] text-white">
         <div className="mx-auto flex max-w-md flex-col">
           <div className="rounded-2xl border border-white/10 bg-rose-500/10 p-5 text-rose-100">
             <p className="text-lg font-semibold">Username não informado.</p>
@@ -134,7 +134,7 @@ export default async function PerfilPage({ params }: { params: PageParams | Prom
   const result = await getProfileData(username);
   if (!result.data) {
     return (
-      <main className="min-h-screen bg-black text-white">
+      <main className="min-h-screen bg-[#0b1014] text-white">
         <div className="mx-auto flex max-w-md flex-col">
           <div className="rounded-2xl border border-white/10 bg-rose-500/10 p-5 text-rose-100">
             <p className="text-lg font-semibold">Não foi possível carregar</p>
@@ -152,7 +152,7 @@ export default async function PerfilPage({ params }: { params: PageParams | Prom
   // Validação adicional de segurança: garantir que o username corresponde
   if (profile.username.toLowerCase() !== username.toLowerCase()) {
     return (
-      <main className="min-h-screen bg-black text-white">
+      <main className="min-h-screen bg-[#0b1014] text-white">
         <div className="mx-auto flex max-w-md flex-col">
           <div className="rounded-2xl border border-white/10 bg-rose-500/10 p-5 text-rose-100">
             <p className="text-lg font-semibold">Erro de validação</p>
@@ -213,14 +213,14 @@ export default async function PerfilPage({ params }: { params: PageParams | Prom
   );
 
   return (
-    <main className="min-h-screen bg-black text-white">
+    <main className="min-h-screen bg-[#0b1014] text-white">
       <SetCompletionCookie />
-      <div className="mx-auto max-w-md bg-black pb-16">
+      <div className="mx-auto max-w-md bg-[#0b1014] pb-16">
         {/* Header Instagram */}
         <ProfileHeader username={username} />
 
         {/* Stories Section */}
-        <div className="border-b border-white/10 bg-black px-4 py-3">
+        <div className="border-b border-white/10 bg-[#0b1014] px-4 py-3">
           <StoriesSection
             profilePicUrl={profile.profilePicUrl}
             profileName={maskedProfileName}
@@ -230,7 +230,7 @@ export default async function PerfilPage({ params }: { params: PageParams | Prom
         </div>
 
         {/* Feed com posts bloqueados - scrollável */}
-        <div className="bg-black">
+        <div className="bg-[#0b1014]">
           {followingUsers.length > 0 ? (
             <FeedInteractions username={username}>
               <div className="space-y-0">

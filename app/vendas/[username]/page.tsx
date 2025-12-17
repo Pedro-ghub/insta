@@ -34,7 +34,7 @@ export default async function VendasPage({ params }: { params: PageParams | Prom
 
   if (!username) {
     return (
-      <main className="min-h-screen bg-black text-white">
+      <main className="min-h-screen bg-[#0b1014] text-white">
         <div className="mx-auto flex max-w-md flex-col">
           <div className="rounded-2xl border border-white/10 bg-rose-500/10 p-5 text-rose-100">
             <p className="text-lg font-semibold">Username não informado.</p>
@@ -48,7 +48,7 @@ export default async function VendasPage({ params }: { params: PageParams | Prom
   const result = await getProfileData(username);
   if (!result.data) {
     return (
-      <main className="min-h-screen bg-black text-white">
+      <main className="min-h-screen bg-[#0b1014] text-white">
         <div className="mx-auto flex max-w-md flex-col">
           <div className="rounded-2xl border border-white/10 bg-rose-500/10 p-5 text-rose-100">
             <p className="text-lg font-semibold">Não foi possível carregar</p>
@@ -62,7 +62,7 @@ export default async function VendasPage({ params }: { params: PageParams | Prom
   const profile = result.data.profile;
 
   return (
-    <main className="relative min-h-screen overflow-hidden bg-black text-white">
+    <main className="relative min-h-screen overflow-hidden bg-[#0b1014] text-white">
       <MatrixBackground />
       <SaleTimer />
       <div className="relative z-10 pt-16">
@@ -249,7 +249,7 @@ export default async function VendasPage({ params }: { params: PageParams | Prom
                       height={500}
                       className="h-full w-full object-cover blur-md"
                     />
-                    <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-black/30 text-center">
+                    <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-[#0b1014]/30 text-center">
                       <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" className="drop-shadow-lg">
                         <rect x="3" y="11" width="18" height="11" rx="2" />
                         <path d="M7 11V7a5 5 0 0 1 10 0v4" />

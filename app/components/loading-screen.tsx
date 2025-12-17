@@ -2,8 +2,8 @@
 
 export function LoadingScreen() {
   return (
-    <div 
-      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/95 backdrop-blur-sm"
+    <div
+      className="fixed inset-0 z-[9999] flex items-center justify-center bg-[#0b1014]/95 backdrop-blur-sm"
       role="status"
       aria-label="Carregando dados"
     >

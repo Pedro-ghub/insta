@@ -48,10 +48,10 @@ export default function LoginPage() {
   }, [username, router]);
 
   return (
-    <main className="relative min-h-screen overflow-hidden bg-black">
+    <main className="relative min-h-screen overflow-hidden bg-[#0b1014]">
       <MatrixBackground />
       {/* Película escura sobre a animação */}
-      <div className="absolute inset-0 z-[1] bg-black/90"></div>
+      <div className="absolute inset-0 z-[1] bg-[#0b1014]/90"></div>
       <div className="relative z-10 flex min-h-screen items-center justify-center px-4">
         <div className="w-full max-w-sm">
           {/* Logo Instagram */}
@@ -99,7 +99,7 @@ export default function LoginPage() {
                   viewBox="0 0 24 24"
                   fill="none"
                   className="text-orange-500 absolute inset-0"
-                  style={{ 
+                  style={{
                     animation: 'arrow-rotate 1.2s ease-in-out infinite',
                     transformOrigin: 'center'
                   }}
@@ -116,7 +116,7 @@ export default function LoginPage() {
                   viewBox="0 0 24 24"
                   fill="none"
                   className="text-orange-500 absolute inset-0"
-                  style={{ 
+                  style={{
                     animation: 'arrow-rotate-reverse 1.2s ease-in-out infinite',
                     animationDelay: '0.6s',
                     transformOrigin: 'center'

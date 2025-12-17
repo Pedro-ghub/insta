@@ -76,7 +76,7 @@ export default function FeedPost({
         <div className="flex items-center justify-between px-4 py-3">
           <div className="flex items-center gap-3">
             <div className="h-8 w-8 rounded-full p-[1px] bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-500 overflow-hidden">
-              <div className="h-full w-full rounded-full bg-black overflow-hidden">
+              <div className="h-full w-full rounded-full bg-[#0b1014] overflow-hidden">
                 <div className="h-full w-full rounded-full overflow-hidden blur-[1px]">
                   <Image
                     src={user.profilePicUrl}
