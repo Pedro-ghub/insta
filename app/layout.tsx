@@ -1,11 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { UtmifyUtmsScript } from "./components/utmify-utms-script";
-import { UtmifyPixel } from "./components/utmify-pixel";
 import { ClarityScript } from "./components/clarity-script";
 import { LoadingProviderWrapper } from "./components/loading-provider-wrapper";
-import { UtmifyLinkProtection } from "./components/utmify-link-protection";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -30,13 +27,31 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        <script
+          src="https://cdn.utmify.com.br/scripts/utms/latest.js"
+          data-utmify-prevent-xcod-sck=""
+          data-utmify-prevent-subids=""
+          async
+          defer
+        />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              window.pixelId = "694062ecad5cf41795f0425c";
+              var a = document.createElement("script");
+              a.setAttribute("async", "");
+              a.setAttribute("defer", "");
+              a.setAttribute("src", "https://cdn.utmify.com.br/scripts/pixel/pixel.js");
+              document.head.appendChild(a);
+            `,
+          }}
+        />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <UtmifyUtmsScript />
-        <UtmifyPixel />
         <ClarityScript />
-        <UtmifyLinkProtection />
         <LoadingProviderWrapper>{children}</LoadingProviderWrapper>
       </body>
     </html>
