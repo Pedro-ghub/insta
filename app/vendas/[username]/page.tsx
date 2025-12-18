@@ -635,7 +635,7 @@ export default async function VendasPage({ params }: { params: PageParams | Prom
                   rel="noopener noreferrer"
                   className="block w-full rounded-lg bg-gradient-to-r from-pink-500 to-orange-500 px-4 py-2.5 text-center text-sm font-bold text-white shadow-lg shadow-pink-500/30 transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-pink-500/40"
                 >
-                  Quero Acesso Agora
+                  ESCOLHER PLANO
                 </a>
                 <p className="mt-2 text-center text-[10px] text-white/50">💳 Pagamento 100% seguro</p>
               </div>
@@ -713,7 +713,7 @@ export default async function VendasPage({ params }: { params: PageParams | Prom
                   >
                     <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover/btn:translate-x-full transition-transform duration-1000"></div>
                     <span className="relative z-10 flex items-center justify-center gap-2">
-                      Quero Ver Tudo Agora
+                      ESCOLHER PLANO
                     </span>
                   </a>
 
