@@ -5,6 +5,7 @@ import MatrixBackground from "@/app/components/matrix-background";
 import FAQAccordion from "@/app/components/faq-accordion";
 import SaleTimer from "@/app/components/sale-timer";
 import ScrollToPlansButton from "@/app/components/scroll-to-plans-button";
+import InstagramLocation from "@/app/components/instagram-location";
 
 interface PageParams {
   username?: string;
@@ -61,6 +62,11 @@ export default async function VendasPage({ params }: { params: PageParams | Prom
 
   const profile = result.data.profile;
 
+  function formatNumber(num: number | null | undefined): string {
+    if (!num) return "0";
+    return num.toLocaleString("pt-BR");
+  }
+
   return (
     <main className="relative min-h-screen overflow-hidden bg-[#0b1014] text-white">
       <MatrixBackground />
@@ -83,57 +89,62 @@ export default async function VendasPage({ params }: { params: PageParams | Prom
           </div>
 
           {/* Seção de Acesso ao Perfil */}
-          <div className="mb-12 rounded-2xl border border-white/10 bg-gray-900 p-6">
-            <h2 className="mb-4 text-center text-xl font-bold text-white">
-              Acesso completo ao perfil de:
-            </h2>
-            <div className="mb-4 text-center">
-              <p className="mb-4 text-2xl font-bold text-white">@{profile.username}</p>
-              <div className="mb-4 flex justify-center">
-                <div className="h-20 w-20 rounded-full bg-gray-700 flex items-center justify-center">
+          <div
+            className="mb-12 rounded-3xl p-6 shadow-xl border backdrop-blur-lg"
+            style={{
+              background: "rgb(12, 16, 17)",
+              backdropFilter: "blur(20px)",
+              border: "1px solid rgba(54, 54, 54, 0.2)",
+            }}
+          >
+            <h1 className="text-xl md:text-3xl font-extrabold text-center mb-4 leading-tight">
+              <span className="text-white">Acesso completo ao perfil de:</span>
+            </h1>
+            <div className="flex items-center gap-4 mb-4">
+              <div className="rounded-full p-[2px] shrink-0" style={{
+                background: "linear-gradient(135deg, rgb(235, 28, 143) 0%, rgb(223, 179, 19) 100%)",
+              }}>
+                <div className="rounded-full p-[2px] bg-[#040607]">
                   <Image
                     src={profile.profilePicUrl}
                     alt={profile.username}
                     width={80}
                     height={80}
-                    className="h-full w-full rounded-full object-cover"
+                    className="rounded-full object-cover"
                   />
                 </div>
               </div>
-              <p className="mb-4 text-lg font-semibold text-white">{profile.fullName || profile.username}</p>
-              <div className="flex justify-center gap-6">
-                <div className="text-center">
-                  <p className="text-2xl font-bold text-white">{profile.postCount || 0}</p>
-                  <p className="text-sm text-white/60">publicações</p>
-                </div>
-                <div className="text-center">
-                  <p className="text-2xl font-bold text-white">{profile.followerCount || 0}</p>
-                  <p className="text-sm text-white/60">seguidores</p>
-                </div>
-                <div className="text-center">
-                  <p className="text-2xl font-bold text-white">{profile.followingCount || 0}</p>
-                  <p className="text-sm text-white/60">seguindo</p>
+              <div className="flex-1 min-w-0">
+                <h2 className="text-xl font-bold text-white mb-1">@{profile.username}</h2>
+                <p className="text-sm text-gray-300 mb-2 truncate">
+                  {profile.fullName || profile.username}
+                </p>
+                <div className="flex gap-4 text-xs">
+                  <div>
+                    <span className="font-bold text-white">{formatNumber(profile.postCount)}</span>
+                    <span className="text-gray-400"> posts</span>
+                  </div>
+                  <div>
+                    <span className="font-bold text-white">{formatNumber(profile.followerCount)}</span>
+                    <span className="text-gray-400"> seguidores</span>
+                  </div>
+                  <div>
+                    <span className="font-bold text-white">{formatNumber(profile.followingCount)}</span>
+                    <span className="text-gray-400"> seguindo</span>
+                  </div>
                 </div>
               </div>
             </div>
             {profile.biography && (
-              <div className="mb-4 text-center">
-                <p className="text-sm text-white whitespace-pre-line">
-                  {profile.biography.replace(/\n/g, ' ')}
-                </p>
-              </div>
+              <p className="text-gray-300 text-xs mb-4 leading-relaxed line-clamp-2">
+                {profile.biography}
+              </p>
             )}
-            <ScrollToPlansButton className="w-full rounded-lg bg-green-500 px-4 py-2 text-sm font-semibold text-white hover:bg-green-600 transition">
-              <div className="flex flex-col items-center gap-0.5">
-                <div>
-                  <span>Sem precisar de senha. </span>
-                  <span>Sem deixar rastros.</span>
-                </div>
-                <div>
-                  <span>Sem que a pessoa saiba.</span>
-                </div>
-              </div>
-            </ScrollToPlansButton>
+            <div className="bg-green-600 rounded-2xl p-4">
+              <p className="text-center text-white text-sm font-semibold">
+                Sem precisar de senha. Sem deixar rastros. Sem que a pessoa saiba.
+              </p>
+            </div>
           </div>
 
           {/* Seta animada */}
@@ -202,25 +213,16 @@ export default async function VendasPage({ params }: { params: PageParams | Prom
               <p className="mb-4 text-sm text-white/70">
                 Veja onde a pessoa está agora e por onde passou nas últimas horas.
               </p>
-              <div className="relative rounded-lg overflow-hidden border border-white/10">
-                {/* Mapa desfocado no topo */}
-                <div className="relative h-48 overflow-hidden">
-                  <Image
-                    src="/images/maps.png"
-                    alt="Mapa"
-                    width={600}
-                    height={400}
-                    className="h-full w-full object-cover blur-sm"
-                  />
-                </div>
-                {/* Painel de informações no fundo */}
-                <div className="bg-gray-800 p-4">
-                  <p className="text-base font-bold text-white mb-1">Localização atual</p>
-                  <p className="text-sm text-white/90 mb-4">@{profile.username} está compartilhando</p>
-                  <ScrollToPlansButton className="w-full rounded-lg bg-gray-700 hover:bg-gray-600 px-4 py-2.5 text-sm font-semibold text-white transition">
-                    Ver
-                  </ScrollToPlansButton>
-                </div>
+
+              {/* Elemento de localização do Instagram */}
+              <div className="flex justify-center">
+                <InstagramLocation
+                  profilePicUrl={profile.profilePicUrl}
+                  username={profile.username}
+                  showBlur={false}
+                  showLock={false}
+                  showMaskedUsername={false}
+                />
               </div>
             </div>
 

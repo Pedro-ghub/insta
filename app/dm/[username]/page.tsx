@@ -215,6 +215,13 @@ export default async function DMPage({ params }: { params: PageParams | Promise<
     `${username}-stories`,
   );
 
+  // Converter storiesProfiles para StoredFollowingUser para usar nas mensagens se necessário
+  const storiesAsStoredUsers: StoredFollowingUser[] = storiesProfiles.map((user) => ({
+    id: user.id,
+    username: user.username,
+    profilePicUrl: user.profilePicUrl,
+  }));
+
   type MessagePreview = {
     user: StoredFollowingUser;
     message: string;
@@ -277,18 +284,13 @@ export default async function DMPage({ params }: { params: PageParams | Promise<
   const remainingUsers = baseFollowingUsers.filter((user) => !accessibleUsernames.has(user.username));
   const generalCount = Math.max(0, 15 - accessibleMessages.length);
 
-  // Se não houver perfis restantes, usar baseFollowingUsers como fallback
-  // getProfilesWithRepetition já lida com repetições de forma determinística quando necessário
-  const generalUsersSource = remainingUsers.length > 0 ? remainingUsers : baseFollowingUsers;
-  // Sempre tentar criar o número necessário de mensagens gerais
-  // getProfilesWithRepetition vai repetir perfis de forma determinística se necessário
-  const actualGeneralCount = generalUsersSource.length > 0 ? generalCount : 0;
+  // Usar apenas perfis únicos, sem repetições
+  // Limitar ao número de perfis únicos disponíveis em remainingUsers
+  // Se não houver remainingUsers suficientes, vamos completar depois com perfis dos stories
+  const actualGeneralCount = Math.min(generalCount, remainingUsers.length);
 
-  const generalUsers = getProfilesWithRepetition(
-    generalUsersSource,
-    actualGeneralCount,
-    `${username}-general-messages`,
-  );
+  // Usar apenas os perfis restantes únicos, sem repetição
+  const generalUsers = remainingUsers.slice(0, actualGeneralCount);
 
   const generalMessagesQueue: MessagePreview[] = generalUsers.map((user, idx) => {
     const messageSeed = `${username}-${user.username}-general-${idx}`;
@@ -367,6 +369,36 @@ export default async function DMPage({ params }: { params: PageParams | Promise<
         const timeSeed = `${username}-${user.username}-unused-time-${idx}`;
         const storyBorderSeed = `${username}-${user.username}-story-border-unused-${idx}`;
         const onlineIndicatorSeed = `${username}-${user.username}-online-unused-${idx}`;
+        const hasOnline = getDeterministicOnlineIndicator(onlineIndicatorSeed);
+
+        finalMessages.push({
+          user,
+          message: getDeterministicMessage(messageSeed),
+          time: getDeterministicTime(timeSeed),
+          isBlurred: true,
+          isLocked: true,
+          hasGradient: true,
+          hasOnlineIndicator: hasOnline,
+          isOrangeIndicator: hasOnline ? getDeterministicOrangeIndicator(onlineIndicatorSeed) : false,
+          hasCameraDot: true,
+          isAccessible: false,
+          hasStoryBorder: getDeterministicStoryBorder(storyBorderSeed),
+        });
+        usedUsernames.add(user.username);
+      }
+    });
+  }
+
+  // Se ainda não temos 15 mensagens, usar perfis dos stories que não foram usados
+  // Isso garante que sempre teremos perfis únicos, sem repetições
+  if (finalMessages.length < 15 && storiesAsStoredUsers.length > 0) {
+    const unusedStoriesUsers = storiesAsStoredUsers.filter((user) => !usedUsernames.has(user.username));
+    unusedStoriesUsers.slice(0, 15 - finalMessages.length).forEach((user, idx) => {
+      if (finalMessages.length < 15) {
+        const messageSeed = `${username}-${user.username}-stories-${idx}`;
+        const timeSeed = `${username}-${user.username}-stories-time-${idx}`;
+        const storyBorderSeed = `${username}-${user.username}-story-border-stories-${idx}`;
+        const onlineIndicatorSeed = `${username}-${user.username}-online-stories-${idx}`;
         const hasOnline = getDeterministicOnlineIndicator(onlineIndicatorSeed);
 
         finalMessages.push({

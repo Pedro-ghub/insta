@@ -3,6 +3,9 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   reactCompiler: true,
   images: {
+    // Usar custom loader para melhor controle de timeout e tratamento de erros
+    loader: "custom",
+    loaderFile: "./image-loader.ts",
     remotePatterns: [
       {
         protocol: "https",
@@ -24,7 +27,15 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "api.mapbox.com",
       },
+      {
+        protocol: "https",
+        hostname: "images.weserv.nl",
+      },
     ],
+    minimumCacheTTL: 60,
+    dangerouslyAllowSVG: true,
+    contentDispositionType: "attachment",
+    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
   },
 };
 
