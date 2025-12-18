@@ -1,20 +1,21 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #0b1014;
+  --foreground: #ededed;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-site-bg: rgb(11, 16, 20);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
+    --background: #0b1014;
     --foreground: #ededed;
   }
 }
@@ -40,10 +41,13 @@ body {
 }
 
 @keyframes meta-ai-pulse {
-  0%, 100% {
+
+  0%,
+  100% {
     transform: scale(1) rotate(0deg);
     opacity: 1;
   }
+
   50% {
     transform: scale(1.1) rotate(180deg);
     opacity: 0.8;
@@ -55,9 +59,12 @@ body {
 }
 
 @keyframes password-dots {
-  0%, 100% {
+
+  0%,
+  100% {
     opacity: 1;
   }
+
   50% {
     opacity: 0.3;
   }
@@ -72,6 +79,7 @@ body {
     transform: translateY(-100%);
     opacity: 0;
   }
+
   to {
     transform: translateY(0);
     opacity: 1;
@@ -82,10 +90,33 @@ body {
   animation: slide-down 0.3s ease-out;
 }
 
-@keyframes pulse-opacity {
-  0%, 100% {
+@keyframes notification-slide-in {
+  from {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
     opacity: 1;
   }
+}
+
+.animate-notification-slide-in {
+  animation: notification-slide-in 0.3s ease-out;
+  /* Compatibilidade com navegadores antigos */
+  -webkit-animation: notification-slide-in 0.3s ease-out;
+  -moz-animation: notification-slide-in 0.3s ease-out;
+  -o-animation: notification-slide-in 0.3s ease-out;
+}
+
+@keyframes pulse-opacity {
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
   50% {
     opacity: 0.6;
   }
@@ -100,18 +131,22 @@ body {
     transform: rotate(0deg) scale(1);
     opacity: 1;
   }
+
   25% {
     transform: rotate(90deg) scale(1.1);
     opacity: 0.9;
   }
+
   50% {
     transform: rotate(180deg) scale(0.9);
     opacity: 0.7;
   }
+
   75% {
     transform: rotate(270deg) scale(1.1);
     opacity: 0.9;
   }
+
   100% {
     transform: rotate(360deg) scale(1);
     opacity: 1;
@@ -123,18 +158,22 @@ body {
     transform: rotate(0deg) scale(1);
     opacity: 0.8;
   }
+
   25% {
     transform: rotate(-90deg) scale(1.1);
     opacity: 0.6;
   }
+
   50% {
     transform: rotate(-180deg) scale(0.9);
     opacity: 0.5;
   }
+
   75% {
     transform: rotate(-270deg) scale(1.1);
     opacity: 0.6;
   }
+
   100% {
     transform: rotate(-360deg) scale(1);
     opacity: 0.8;
@@ -145,6 +184,7 @@ body {
   0% {
     transform: translateX(-100%);
   }
+
   100% {
     transform: translateX(400%);
   }
@@ -152,4 +192,11 @@ body {
 
 .loading-progress {
   animation: loading 2s ease-in-out infinite;
+}
+
+.blur-xs {
+  filter: blur(2px);
+  -webkit-filter: blur(2px);
+  -moz-filter: blur(2px);
+  -o-filter: blur(2px);
 }

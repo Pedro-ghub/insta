@@ -46,59 +46,30 @@ export default function AccessPopup({ username, onClose, onContinue }: AccessPop
   if (!isVisible) return null;
 
   return (
-    <div className="fixed top-0 left-0 right-0 z-50 flex justify-center bg-black/50 p-4 animate-slide-down">
-      <div className="bg-red-600 rounded-lg p-3 max-w-[280px] w-full relative shadow-2xl">
-        {/* Botão fechar */}
-        <button
-          onClick={handleClose}
-          className="absolute top-2 right-2 text-white hover:text-gray-200 transition"
-          aria-label="Fechar"
+    <div
+      className="fixed top-0 left-0 right-0 z-50 w-full px-4 pt-4 animate-notification-slide-in"
+      style={{
+        transform: 'translateY(0)',
+        WebkitTransform: 'translateY(0)',
+        MozTransform: 'translateY(0)',
+        msTransform: 'translateY(0)',
+      }}
+    >
+      <div className="mx-auto max-w-sm">
+        <div
+          className="rounded-lg p-3 relative shadow-2xl border border-white/10"
+          style={{ backgroundColor: '#0F172A' }}
         >
-          <svg
-            width="16"
-            height="16"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <path d="M18 6L6 18" />
-            <path d="M6 6l12 12" />
-          </svg>
-        </button>
-
-        {/* Conteúdo */}
-        <div className="pr-5">
-          <div className="mb-2">
-            <p className="text-white text-xs font-medium mb-0.5">
-              No momento o seu acesso só permite
-            </p>
-            <p className="text-white text-xs font-medium">
-              visualização do conteúdo.
-            </p>
-          </div>
-          <div className="mb-3">
-            <p className="text-white text-[10px] leading-tight">
-              Para poder mexer e ver de forma completa
-            </p>
-            <p className="text-white text-[10px] leading-tight">
-              adquira a ferramenta do StalkGram.
-            </p>
-          </div>
-        </div>
-
-        {/* Botão continuar */}
-        <div className="flex justify-end">
+          {/* Botão fechar */}
           <button
-            onClick={handleContinue}
-            className="bg-red-700 hover:bg-red-800 rounded-full p-2 text-white transition"
-            aria-label="Continuar"
+            onClick={handleClose}
+            className="absolute top-2 right-2 text-white/60 hover:text-white transition-colors"
+            aria-label="Fechar"
+            type="button"
           >
             <svg
-              width="16"
-              height="16"
+              width="14"
+              height="14"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
@@ -106,10 +77,39 @@ export default function AccessPopup({ username, onClose, onContinue }: AccessPop
               strokeLinecap="round"
               strokeLinejoin="round"
             >
-              <path d="M5 12h14" />
-              <path d="m12 5 7 7-7 7" />
+              <path d="M18 6L6 18" />
+              <path d="M6 6l12 12" />
             </svg>
           </button>
+
+          {/* Conteúdo compacto */}
+          <div className="pr-5">
+            {/* Headline */}
+            <h2 className="text-white text-xs font-bold mb-1 leading-tight">
+              🔒 O TESTE GRÁTIS SÓ PERMITE A VISUALIZAÇÃO DO CONTEÚDO
+            </h2>
+
+            {/* Subheadline */}
+            <p className="text-white/70 text-[10px] leading-relaxed mb-2.5">
+              Tenha acesso ao perfil completo, incluindo mensagens e histórico de atividade adquirindo o StalkGram.
+            </p>
+          </div>
+
+          {/* Botão e texto */}
+          <div className="space-y-1.5">
+            <button
+              onClick={handleContinue}
+              className="w-full bg-green-500 hover:bg-green-600 rounded-lg px-3 py-2 text-white font-semibold text-xs transition-colors shadow-lg"
+              aria-label="Ver tudo agora"
+              type="button"
+            >
+              Ver tudo agora
+            </button>
+
+            <p className="text-white/60 text-[9px] text-center">
+              🔓 Acesso imediato • Cancele quando quiser
+            </p>
+          </div>
         </div>
       </div>
     </div>

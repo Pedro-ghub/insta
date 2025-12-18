@@ -16,6 +16,15 @@ function getCacheTTL(): number {
 }
 
 /**
+ * Verifica se as variáveis de ambiente necessárias estão configuradas
+ */
+function hasRequiredEnvVars(): boolean {
+  const sessionId = process.env.IG_SESSIONID;
+  const csrfToken = process.env.IG_CSRFTOKEN;
+  return !!(sessionId && csrfToken);
+}
+
+/**
  * Obtém dados do Instagram com cache persistente usando Next.js unstable_cache.
  * O cache é compartilhado entre todas as páginas e rotas da API, reduzindo
  * chamadas desnecessárias aos provedores externos.
@@ -35,22 +44,49 @@ export async function getInstagramData(
     throw new Error("Username inválido.");
   }
 
+  // Verificar variáveis de ambiente antes de tentar fazer requisição
+  // Isso evita tentativas desnecessárias e melhora a mensagem de erro
+  if (!hasRequiredEnvVars()) {
+    const errorMessage = "Env IG_SESSIONID e IG_CSRFTOKEN são obrigatórios para acessar os endpoints do Instagram.";
+    if (process.env.NODE_ENV === "development") {
+      console.warn(`[Instagram] ${errorMessage} Configure as variáveis de ambiente no arquivo .env.local`);
+    }
+    throw new Error(errorMessage);
+  }
+
   const providerMode = getProviderMode();
   const ttl = getCacheTTL();
 
   // Criar chave única que inclui o provider e username para garantir consistência
   // O unstable_cache usa essa chave para identificar entradas únicas no cache
+  // Usar um formato mais explícito para evitar conflitos
   const cacheKeyParts = [`instagram`, providerMode, cleanUsername];
 
   // Usar unstable_cache para cache persistente compartilhado
-  // A função interna captura cleanUsername via closure
-  // O Next.js gerencia automaticamente o cache baseado nas chaves fornecidas
+  // A função captura cleanUsername via closure para garantir isolamento
   const cachedScrape = unstable_cache(
     async () => {
       if (process.env.NODE_ENV === "development") {
         console.log(`[Cache MISS] Fetching Instagram data for: ${cleanUsername}`);
       }
-      return scrapeInstagram(cleanUsername);
+
+      const result = await scrapeInstagram(cleanUsername);
+
+      // Validação crítica: garantir que o username retornado corresponde ao solicitado
+      // Isso previne problemas de cache misturado entre diferentes usernames
+      const returnedUsername = result.profile.username.toLowerCase().trim();
+      const requestedUsername = cleanUsername.toLowerCase().trim();
+
+      if (returnedUsername !== requestedUsername) {
+        const errorMsg = `Cache validation failed: requested '${requestedUsername}' but got '${returnedUsername}'`;
+        if (process.env.NODE_ENV === "development") {
+          console.error(`[Cache ERROR] ${errorMsg}`);
+        }
+        // Não cachear erros de validação - limpar o cache se houver problema
+        throw new Error(errorMsg);
+      }
+
+      return result;
     },
     cacheKeyParts,
     {
@@ -65,7 +101,24 @@ export async function getInstagramData(
     );
   }
 
-  return cachedScrape();
+  // Executar função cacheada
+  const result = await cachedScrape();
+
+  // Validação adicional após retorno do cache (defesa em profundidade)
+  const returnedUsername = result.profile.username.toLowerCase().trim();
+  const requestedUsername = cleanUsername.toLowerCase().trim();
+
+  if (returnedUsername !== requestedUsername) {
+    const errorMsg = `Username mismatch: requested '${requestedUsername}' but got '${returnedUsername}'`;
+    if (process.env.NODE_ENV === "development") {
+      console.error(`[Cache ERROR] ${errorMsg}`);
+    }
+    // Invalidar cache incorreto
+    await revalidateInstagramCache(cleanUsername);
+    throw new Error(errorMsg);
+  }
+
+  return result;
 }
 
 /**

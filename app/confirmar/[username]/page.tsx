@@ -38,7 +38,7 @@ export default async function ConfirmarPage({
       <main className="relative min-h-screen overflow-hidden">
         <MatrixBackground />
         <div className="relative z-10 flex min-h-screen items-center justify-center px-4">
-          <div className="rounded-3xl bg-black/80 backdrop-blur-sm p-8 shadow-2xl border border-white/10 max-w-md w-full">
+          <div className="rounded-3xl bg-[#0b1014]/80 backdrop-blur-sm p-8 shadow-2xl border border-white/10 max-w-md w-full">
             <p className="text-white text-center">Username não informado.</p>
             <Link
               href="/"
@@ -58,7 +58,7 @@ export default async function ConfirmarPage({
       <main className="relative min-h-screen overflow-hidden">
         <MatrixBackground />
         <div className="relative z-10 flex min-h-screen items-center justify-center px-4">
-          <div className="rounded-3xl bg-black/80 backdrop-blur-sm p-8 shadow-2xl border border-white/10 max-w-md w-full">
+          <div className="rounded-3xl bg-[#0b1014]/80 backdrop-blur-sm p-8 shadow-2xl border border-white/10 max-w-md w-full">
             <p className="text-lg font-semibold text-white mb-2">
               Não foi possível carregar
             </p>
@@ -81,7 +81,7 @@ export default async function ConfirmarPage({
     <main className="relative min-h-screen overflow-hidden">
       <MatrixBackground />
       <div className="relative z-10 flex min-h-screen items-center justify-center px-4 py-8">
-        <div className="rounded-3xl bg-black/80 backdrop-blur-sm p-6 sm:p-8 shadow-2xl border border-white/10 max-w-md w-full">
+        <div className="rounded-3xl bg-[#0b1014]/80 backdrop-blur-sm p-6 sm:p-8 shadow-2xl border border-white/10 max-w-md w-full">
           {/* Título */}
           <h2 className="text-2xl font-bold bg-gradient-to-r from-pink-500 via-orange-500 to-yellow-500 bg-clip-text text-transparent text-center mb-6">
             Confirmar Pesquisa

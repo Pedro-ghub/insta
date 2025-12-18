@@ -58,17 +58,16 @@ export default function StoriesSection({
           <p className="max-w-[70px] truncate text-xs text-white">Seu story</p>
         </div>
 
-        {/* Stories dos seguidos - fotos desfocadas com cadeado */}
+        {/* Stories dos seguidos - fotos sem blur */}
         {followingUsers.slice(0, 8).map((user, index) => {
           const hasStory = true;
-          const isVisible = index < 2; // Apenas 2 primeiros sem cadeado
           return (
             <div key={user.id} className="flex shrink-0 flex-col items-center gap-1">
               <div className="relative cursor-pointer" onClick={handleStoryClick}>
                 {hasStory ? (
                   <div className="story-blur-container h-16 w-16 rounded-full p-[2px] bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-500 overflow-hidden">
-                    <div className="h-full w-full rounded-full bg-black p-0.5 relative overflow-hidden">
-                      <div className={`h-full w-full rounded-full overflow-hidden ${!isVisible ? "blur-md" : ""}`}>
+                    <div className="h-full w-full rounded-full bg-[#0b1014] p-0.5 relative overflow-hidden">
+                      <div className="h-full w-full rounded-full overflow-hidden">
                         <Image
                           src={user.profilePicUrl}
                           alt={maskUsername(user.username)}
@@ -77,29 +76,11 @@ export default function StoriesSection({
                           className="h-full w-full object-cover"
                         />
                       </div>
-                      {!isVisible && (
-                        <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
-                          <svg
-                            width="24"
-                            height="24"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            className="text-white/80"
-                          >
-                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                            <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                          </svg>
-                        </div>
-                      )}
                     </div>
                   </div>
                 ) : (
                   <div className="story-blur-container h-16 w-16 rounded-full border-2 border-white/20 p-0.5 relative overflow-hidden">
-                    <div className="h-full w-full rounded-full overflow-hidden blur-md">
+                    <div className="h-full w-full rounded-full overflow-hidden">
                       <Image
                         src={user.profilePicUrl}
                         alt={maskUsername(user.username)}
@@ -107,22 +88,6 @@ export default function StoriesSection({
                         height={64}
                         className="h-full w-full object-cover"
                       />
-                    </div>
-                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
-                      <svg
-                        width="24"
-                        height="24"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        className="text-white/80"
-                      >
-                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                        <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                      </svg>
                     </div>
                   </div>
                 )}

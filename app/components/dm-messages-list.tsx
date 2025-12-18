@@ -2,8 +2,10 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useLoading } from "../contexts/loading-context";
 import AccessPopup from "./access-popup";
+import InstagramTimestamp from "./instagram-timestamp";
 interface Message {
   user: {
     id: string;
@@ -18,6 +20,8 @@ interface Message {
   hasOnlineIndicator: boolean;
   isOrangeIndicator: boolean;
   hasCameraDot: boolean;
+  isAccessible?: boolean;
+  hasStoryBorder?: boolean;
 }
 
 interface DMMessagesListProps {
@@ -34,12 +38,19 @@ function maskUsername(username: string): string {
 export default function DMMessagesList({ messages, username }: DMMessagesListProps) {
   const [showPopup, setShowPopup] = useState(false);
   const [hasShownOnScrollEnd, setHasShownOnScrollEnd] = useState(false);
+  const router = useRouter();
+  const { setLoading } = useLoading();
 
   const handleMessageClick = (index: number) => {
-    // Se não for o primeiro (índice 0), mostrar popup
-    if (index !== 0) {
-      setShowPopup(true);
-    }
+    setShowPopup(true);
+  };
+
+  const handleAccessibleClick = (e: React.MouseEvent, targetUsername: string) => {
+    e.preventDefault();
+    // Ativar loading antes da navegação
+    setLoading(true);
+    // Navegar - o loading será desativado quando a página de destino carregar
+    router.push(`/dm/${username}/chat/${targetUsername}`);
   };
 
   const handleScroll: React.UIEventHandler<HTMLDivElement> = (event) => {
@@ -56,67 +67,114 @@ export default function DMMessagesList({ messages, username }: DMMessagesListPro
   return (
     <>
       <div
-        className="divide-y divide-white/10 max-h-[420px] overflow-y-auto"
+        className="max-h-[420px] overflow-y-auto"
         onScroll={handleScroll}
       >
         {messages.map((msg, index) => {
-          const isFirst = index === 0;
-          const firstUserUsername = messages[0]?.user.username || "";
           const className = "flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-white/5 transition";
 
           // Lógica de exibição:
-          // - Índices 0, 1, 2: foto sem blur, mensagem sem blur
-          // - Índices 3, 4: foto com blur + cadeado, mensagem sem blur
-          // - Índices 5+: foto sem blur, mensagem com blur
-          const isFirstThree = index < 3;
-          const isFourthOrFifth = index === 3 || index === 4;
-          const isSixthAndBeyond = index >= 5;
+          // - Primeiras 5 fotos de perfil (índices 0-4): com blur sutil
+          // - Demais fotos: sem blur
+          // - Mensagens: a partir do índice 5, mensagem com blur
+          const isFirstFive = index < 5;
+          const shouldBlurMessage = msg.isBlurred;
+
+          const renderProfilePicture = () => {
+            const imageContent = (
+              <Image
+                src={msg.user.profilePicUrl}
+                alt={maskUsername(msg.user.username)}
+                width={48}
+                height={48}
+                className="h-full w-full object-cover"
+              />
+            );
+
+            if (msg.hasStoryBorder) {
+              // Borda de story do Instagram (gradiente rosa/amarelo)
+              return (
+                <div className="h-12 w-12 relative shrink-0">
+                  <div
+                    className="absolute inset-0 rounded-full p-[1.5px]"
+                    style={{
+                      background: "linear-gradient(135deg, rgb(235, 28, 143) 0%, rgb(223, 179, 19) 100%)",
+                    }}
+                  >
+                    <div className="w-full h-full rounded-full bg-[#0B1014] p-[1.5px]">
+                      <div className="w-full h-full rounded-full overflow-hidden relative bg-[#0B1014]">
+                        {isFirstFive ? (
+                          <>
+                            <div className="h-full w-full rounded-full overflow-hidden blur-[5px]">
+                              {imageContent}
+                            </div>
+                            <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
+                              <svg
+                                width="14"
+                                height="14"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="white"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                className="drop-shadow-lg opacity-80"
+                              >
+                                <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                              </svg>
+                            </div>
+                          </>
+                        ) : (
+                          imageContent
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            }
+
+            // Sem borda de story
+            if (isFirstFive) {
+              return (
+                <div className="h-12 w-12 rounded-full overflow-hidden relative">
+                  <div className="h-full w-full rounded-full overflow-hidden blur-[5px]">
+                    {imageContent}
+                  </div>
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
+                    <svg
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="white"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="drop-shadow-lg opacity-80"
+                    >
+                      <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                      <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                    </svg>
+                  </div>
+                </div>
+              );
+            }
+
+            return (
+              <div className="h-12 w-12 rounded-full overflow-hidden">
+                {imageContent}
+              </div>
+            );
+          };
 
           const content = (
             <>
               <div className="relative shrink-0">
-                {isFirstThree || isSixthAndBeyond ? (
-                  // Primeiros 3 e a partir do 6º: foto sem blur
-                  <div className="h-12 w-12 rounded-full overflow-hidden">
-                    <Image
-                      src={msg.user.profilePicUrl}
-                      alt={maskUsername(msg.user.username)}
-                      width={48}
-                      height={48}
-                      className="h-full w-full object-cover"
-                    />
-                  </div>
-                ) : (
-                  // 4º e 5º: foto com blur + cadeado
-                  <div className="h-12 w-12 rounded-full overflow-hidden relative">
-                    <div className="h-full w-full rounded-full overflow-hidden blur-md">
-                      <Image
-                        src={msg.user.profilePicUrl}
-                        alt={maskUsername(msg.user.username)}
-                        width={48}
-                        height={48}
-                        className="h-full w-full object-cover"
-                      />
-                    </div>
-                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
-                      <svg
-                        width="24"
-                        height="24"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="white"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
-                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                        <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                      </svg>
-                    </div>
-                  </div>
-                )}
+                {renderProfilePicture()}
                 {msg.hasOnlineIndicator && (
-                  <div className={`absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 ${isFirstThree ? "border-black" : "border-white"} ${msg.isOrangeIndicator ? "bg-orange-500" : "bg-green-500"}`} />
+                  <div className={`absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 z-20 ${isFirstFive || msg.hasStoryBorder ? "border-white" : "border-black"} ${msg.isOrangeIndicator ? "bg-orange-500" : "bg-green-500"}`} />
                 )}
               </div>
               <div className="flex-1 min-w-0">
@@ -124,10 +182,13 @@ export default function DMMessagesList({ messages, username }: DMMessagesListPro
                   <span className="text-sm font-semibold text-white">
                     {maskUsername(msg.user.username)}
                   </span>
-                  <span className="text-xs text-white/60 shrink-0">{msg.time}</span>
+                  <InstagramTimestamp
+                    seed={`${username}-${msg.user.username}-${index}-time`}
+                    className="shrink-0"
+                  />
                 </div>
-                <p className={`text-sm font-semibold text-white truncate ${isSixthAndBeyond ? "blur-sm select-none" : ""}`}>
-                  {isSixthAndBeyond ? "Mensagem restrita" : msg.message}
+                <p className={`text-sm font-semibold text-white truncate ${shouldBlurMessage ? "blur-sm select-none" : ""}`}>
+                  {shouldBlurMessage ? "Mensagem restrita" : msg.message}
                 </p>
               </div>
               <div className="shrink-0 relative">
@@ -148,24 +209,17 @@ export default function DMMessagesList({ messages, username }: DMMessagesListPro
           );
 
           return (
-            <div key={`msg-${msg.user.id}-${index}`}>
-              {isFirst ? (
-                <Link
-                  href={`/dm/${username}/chat/${firstUserUsername}`}
-                  onClick={() => handleMessageClick(index)}
-                  className={className}
-                  suppressHydrationWarning
-                >
-                  {content}
-                </Link>
-              ) : (
-                <div
-                  onClick={() => handleMessageClick(index)}
-                  className={className}
-                >
-                  {content}
-                </div>
-              )}
+            <div key={`msg-${msg.user.username}-${index}`}>
+              <div
+                onClick={(e) =>
+                  msg.isAccessible
+                    ? handleAccessibleClick(e, msg.user.username)
+                    : handleMessageClick(index)
+                }
+                className={className}
+              >
+                {content}
+              </div>
             </div>
           );
         })}

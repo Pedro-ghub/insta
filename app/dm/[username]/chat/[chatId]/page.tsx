@@ -4,23 +4,20 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import ChatMessages from "@/app/components/chat-messages";
+import { ClearLoadingOnMount } from "@/app/components/clear-loading-on-mount";
+import { getDeterministicChatTemplate, hashString } from "@/app/lib/chat-templates";
+import { getUserCity } from "@/app/lib/location";
+import type { ChatMessage } from "@/app/lib/chat-templates/types";
+import type { StoredFollowingUser } from "@/app/lib/following";
+import { parseStoredFollowingCookie, selectMessageFollowingSample } from "@/app/lib/following";
+import {
+  getAccessibleTemplateAssignments,
+  getTemplateByKey,
+} from "@/app/lib/chat-templates/accessible-helpers";
 
 interface PageParams {
   username?: string;
   chatId?: string;
-}
-
-interface ChatMessage {
-  type: "other" | "me";
-  text: string;
-  blurred?: boolean;
-  duration?: string;
-}
-
-interface StoredFollowingUser {
-  id: string;
-  username: string;
-  profilePicUrl: string;
 }
 
 async function resolveParams(params: unknown): Promise<PageParams> {
@@ -34,91 +31,6 @@ function maskUsername(username: string): string {
   return `${firstChar}*****`;
 }
 
-// Função para gerar um número determinístico baseado em uma string
-function hashString(str: string): number {
-  let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    const char = str.charCodeAt(i);
-    hash = ((hash << 5) - hash) + char;
-    hash = hash & hash; // Convert to 32bit integer
-  }
-  return Math.abs(hash);
-}
-
-// Templates de roteiros de chat (ciúme + flerte + intuição de traição)
-const chatTemplates: { previous: ChatMessage[]; main: ChatMessage[] }[] = [
-  {
-    // Template 1: viu ontem, fingiu que não viu
-    previous: [
-      { type: "other", text: "você não me respondeu ontem…", blurred: true },
-      { type: "me", text: "desculpa, tava ocupado", blurred: true },
-      { type: "other", text: "ocupado com o quê?", blurred: true },
-      { type: "me", text: "nada demais, só trabalho", blurred: true },
-      { type: "other", text: "hmm… acredito", blurred: true },
-      { type: "other", text: "voice", duration: "0:15", blurred: true },
-    ],
-    main: [
-      { type: "other", text: "você tava onde ontem? 🤨" },
-      { type: "me", text: "eu? nada… por quê?" },
-      { type: "other", text: "porque eu vi você e fingi que não vi…" },
-      { type: "me", text: "você viu mesmo? kkk" },
-      { type: "other", text: "não faz essa cara de inocente…" },
-      { type: "other", text: "voice", duration: "0:27" },
-      { type: "me", text: "voice", duration: "1:12" },
-      { type: "other", text: "tá… então hoje você me deve uma coisa." },
-      { type: "me", text: "depende do que for 😅" },
-    ],
-  },
-  {
-    // Template 2: curtidas e stories
-    previous: [
-      { type: "other", text: "você curtiu tudo denovo…", blurred: true },
-      { type: "me", text: "é só amizade, relaxa", blurred: true },
-      { type: "other", text: "engraçado, comigo você não reage assim", blurred: true },
-      { type: "me", text: "para, você sabe que é diferente", blurred: true },
-      { type: "other", text: "diferente como? 🤔", blurred: true },
-      { type: "me", text: "voice", duration: "0:41", blurred: true },
-    ],
-    main: [
-      { type: "other", text: "não achei graça daquele story de ontem…" },
-      { type: "me", text: "qual deles? 😅" },
-      { type: "other", text: "o que você marcou 'melhor companhia'…" },
-      { type: "me", text: "exagera não, foi zoeira" },
-      { type: "other", text: "zoeira pra quem lê… pra mim não foi" },
-      { type: "other", text: "voice", duration: "0:32" },
-      { type: "me", text: "voice", duration: "1:03" },
-      { type: "other", text: "tá… então prova que é só zoeira." },
-      { type: "me", text: "cuidado com o que você pede 👀" },
-    ],
-  },
-  {
-    // Template 3: sumiço e segredo
-    previous: [
-      { type: "me", text: "cheguei em casa agora", blurred: true },
-      { type: "other", text: "demorou hein…", blurred: true },
-      { type: "me", text: "nem foi tudo isso", blurred: true },
-      { type: "other", text: "pra quem sumiu o dia todo foi sim", blurred: true },
-      { type: "other", text: "voice", duration: "0:19", blurred: true },
-    ],
-    main: [
-      { type: "other", text: "se eu perguntar com quem você tava, você responde?" },
-      { type: "me", text: "depende se você vai ficar com ciúmes ou não 😏" },
-      { type: "other", text: "então já sei que não vou gostar da resposta" },
-      { type: "me", text: "calma… não foi nada demais" },
-      { type: "other", text: "engraçado, sempre é 'nada demais'" },
-      { type: "me", text: "voice", duration: "0:54" },
-      { type: "other", text: "voice", duration: "0:47" },
-      { type: "other", text: "só me promete uma coisa: não mente pra mim." },
-      { type: "me", text: "então não pergunta tudo 👀" },
-    ],
-  },
-];
-
-function getDeterministicChatTemplate(seed: string): { previous: ChatMessage[]; main: ChatMessage[] } {
-  const hash = hashString(seed);
-  return chatTemplates[hash % chatTemplates.length];
-}
-
 export default async function ChatPage({ params }: { params: PageParams | Promise<PageParams> }) {
   const resolved = await resolveParams(params);
   const username = resolved.username ?? "";
@@ -126,7 +38,7 @@ export default async function ChatPage({ params }: { params: PageParams | Promis
 
   if (!username || !chatId) {
     return (
-      <main className="min-h-screen bg-black text-white">
+      <main className="min-h-screen bg-[#0b1014] text-white">
         <div className="mx-auto flex max-w-md flex-col">
           <div className="rounded-2xl border border-white/10 bg-rose-500/10 p-5 text-rose-100">
             <p className="text-lg font-semibold">Parâmetros inválidos.</p>
@@ -139,7 +51,7 @@ export default async function ChatPage({ params }: { params: PageParams | Promis
   const result = await getProfileData(username);
   if (!result.data) {
     return (
-      <main className="min-h-screen bg-black text-white">
+      <main className="min-h-screen bg-[#0b1014] text-white">
         <div className="mx-auto flex max-w-md flex-col">
           <div className="rounded-2xl border border-white/10 bg-rose-500/10 p-5 text-rose-100">
             <p className="text-lg font-semibold">Não foi possível carregar</p>
@@ -154,47 +66,37 @@ export default async function ChatPage({ params }: { params: PageParams | Promis
   const profile = data.profile;
   const hasFollowing = data.followingSample.length > 0;
 
+  // Validação adicional de segurança: garantir que o username corresponde
+  if (profile.username.toLowerCase() !== username.toLowerCase()) {
+    return (
+      <main className="min-h-screen bg-[#0b1014] text-white">
+        <div className="mx-auto flex max-w-md flex-col">
+          <div className="rounded-2xl border border-white/10 bg-rose-500/10 p-5 text-rose-100">
+            <p className="text-lg font-semibold">Erro de validação</p>
+            <p className="mt-2 text-sm text-rose-50/90">
+              Username solicitado não corresponde aos dados retornados.
+            </p>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
   // Se o perfil for privado e não tiver dados de seguidos, redirecionar para vendas
+  // Usar o username da URL, não do cache, para garantir correção
   if (profile.isPrivate && !hasFollowing) {
-    redirect(`/vendas/${profile.username}`);
+    redirect(`/vendas/${username}`);
   }
 
   const cookieStore = await cookies();
   const followingCookieName = `sg_dm_following_${username}`;
   const existingFollowingCookie = cookieStore.get(followingCookieName)?.value ?? "";
 
-  let storedFollowingUsers: StoredFollowingUser[] = [];
+  let followingUsers: StoredFollowingUser[] = parseStoredFollowingCookie(existingFollowingCookie);
 
-  if (existingFollowingCookie) {
-    try {
-      storedFollowingUsers = JSON.parse(
-        decodeURIComponent(existingFollowingCookie),
-      ) as StoredFollowingUser[];
-    } catch {
-      storedFollowingUsers = [];
-    }
+  if (followingUsers.length === 0 && hasFollowing) {
+    followingUsers = selectMessageFollowingSample(data.followingSample);
   }
-
-  if (storedFollowingUsers.length === 0 && hasFollowing) {
-    const sorted = [...data.followingSample].sort((a, b) => {
-      const hashA = hashString(a.username);
-      const hashB = hashString(b.username);
-      if (hashA === hashB) {
-        return a.username.localeCompare(b.username);
-      }
-      return hashA - hashB;
-    });
-
-    const sliced = sorted.slice(0, 15);
-
-    storedFollowingUsers = sliced.map((user) => ({
-      id: String(user.id),
-      username: user.username,
-      profilePicUrl: user.profilePicUrl,
-    }));
-  }
-
-  const followingUsers = storedFollowingUsers;
 
   const chatUserFromList = followingUsers.find(
     (user) => user.username === chatId,
@@ -208,17 +110,42 @@ export default async function ChatPage({ params }: { params: PageParams | Promis
   };
 
   const templateSeed = `${username}-${chatUser.username}-chat-template`;
-  const chosenTemplate = getDeterministicChatTemplate(templateSeed);
+  const accessibleAssignments = getAccessibleTemplateAssignments(
+    followingUsers,
+    `${username}-accessible-chats`,
+  );
+  const matchingAccessible = accessibleAssignments.find(
+    (assignment) => assignment.user.username === chatUser.username,
+  );
+  const chosenTemplate = matchingAccessible
+    ? getTemplateByKey(matchingAccessible.templateKey)
+    : getDeterministicChatTemplate(templateSeed);
+
+  // Obter cidade do usuário
+  let resolvedCity = "Maringá";
+  try {
+    // Buscar cidade sem IP específico (a API detecta automaticamente)
+    const city = await getUserCity();
+    if (city) {
+      resolvedCity = city;
+    }
+  } catch (error) {
+    // Se falhar ao obter cidade, usar fallback
+    console.error("Erro ao obter cidade do usuário:", error);
+  }
+
+  const chosenTemplateWithCity = applyCityToTemplate(chosenTemplate, resolvedCity);
 
   // Garantir que estamos usando o primeiro usuário da lista ordenada
   // Se o chatId (username) não corresponder ao primeiro, ainda assim usamos o primeiro
   // para manter consistência com a lista de DM
 
   return (
-    <main className="min-h-screen bg-black text-white">
-      <div className="mx-auto max-w-md bg-black flex flex-col h-screen">
+    <main className="min-h-screen bg-[#0b1014] text-white">
+      <ClearLoadingOnMount />
+      <div className="mx-auto max-w-md bg-[#0b1014] flex flex-col h-screen">
         {/* Header do Chat */}
-        <header className="sticky top-0 z-10 flex items-center justify-between border-b border-white/10 bg-black px-4 py-3">
+        <header className="sticky top-0 z-10 flex items-center justify-between border-b border-white/10 bg-[#0b1014] px-4 py-3">
           <div className="flex items-center gap-3">
             <Link
               href={`/dm/${username}`}
@@ -239,15 +166,17 @@ export default async function ChatPage({ params }: { params: PageParams | Promis
               </svg>
             </Link>
             <div className="relative">
-              <div className="h-10 w-10 rounded-full p-[2px] bg-gradient-to-br from-orange-500 to-yellow-500 overflow-hidden">
+              <div className="h-10 w-10 rounded-full p-[2px] bg-linear-to-br from-orange-500 to-yellow-500 overflow-hidden">
                 <div className="h-full w-full rounded-full bg-gray-300 overflow-hidden">
-                  <Image
-                    src={chatUser.profilePicUrl}
-                    alt={maskUsername(chatUser.username)}
-                    width={40}
-                    height={40}
-                    className="h-full w-full object-cover"
-                  />
+                  <div className="h-full w-full rounded-full overflow-hidden blur-xs">
+                    <Image
+                      src={chatUser.profilePicUrl}
+                      alt={maskUsername(chatUser.username)}
+                      width={40}
+                      height={40}
+                      className="h-full w-full object-cover"
+                    />
+                  </div>
                 </div>
               </div>
             </div>
@@ -255,7 +184,7 @@ export default async function ChatPage({ params }: { params: PageParams | Promis
               <span className="text-sm font-semibold text-white">
                 {maskUsername(chatUser.username)}
               </span>
-              <span className="text-xs text-green-500">online</span>
+              <span className="text-xs text-gray-400">online</span>
             </div>
           </div>
           <div className="flex items-center gap-4">
@@ -289,15 +218,15 @@ export default async function ChatPage({ params }: { params: PageParams | Promis
 
         {/* Área de Chat */}
         <ChatMessages
-          previousMessages={chosenTemplate.previous}
-          chatMessages={chosenTemplate.main}
+          previousMessages={chosenTemplateWithCity.previous}
+          chatMessages={chosenTemplateWithCity.main}
           username={username}
           otherUserProfilePicUrl={chatUser.profilePicUrl}
           otherUserUsername={chatUser.username}
         />
 
         {/* Barra de Input */}
-        <div className="border-t border-white/10 bg-black px-4 py-3">
+        <div className="border-t border-white/10 bg-[#0b1014] px-4 py-3">
           <div className="flex items-center gap-3">
             <svg
               width="24"
@@ -383,5 +312,29 @@ async function getProfileData(username: string) {
         : "Erro desconhecido ao buscar dados do Instagram.";
     return { data: null, error: message };
   }
+}
+
+function applyCityToTemplate(template: { previous: ChatMessage[]; main: ChatMessage[] }, city: string) {
+  const replaceCity = (message: ChatMessage): ChatMessage => {
+    const replaceText = (value: string) => value.replace(/{{city}}/g, city);
+
+    const textIncludesCity = message.text?.includes("{{city}}");
+    const fullTextIncludesCity = message.fullText?.includes("{{city}}");
+
+    if (!textIncludesCity && !fullTextIncludesCity) {
+      return message;
+    }
+
+    return {
+      ...message,
+      ...(textIncludesCity && { text: replaceText(message.text) }),
+      ...(fullTextIncludesCity && message.fullText && { fullText: replaceText(message.fullText) }),
+    };
+  };
+
+  return {
+    previous: template.previous.map(replaceCity),
+    main: template.main.map(replaceCity),
+  };
 }
 

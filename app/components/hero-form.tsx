@@ -30,13 +30,13 @@ export default function HeroForm() {
 
     const incrementCount = () => {
       setProfileCount((prev) => prev + 1);
-      
+
       // Velocidade variável: às vezes rápido (200-600ms), às vezes devagar (1500-4000ms)
       const isFast = Math.random() > 0.4; // 60% chance de ser rápido
-      const delay = isFast 
+      const delay = isFast
         ? Math.random() * 400 + 200 // 200-600ms
         : Math.random() * 2500 + 1500; // 1500-4000ms
-      
+
       timeoutId = setTimeout(incrementCount, delay);
     };
 
@@ -67,7 +67,7 @@ export default function HeroForm() {
   }
 
   return (
-    <div className="rounded-3xl bg-black/80 backdrop-blur-sm p-8 shadow-2xl border border-white/10">
+    <div className="rounded-3xl bg-[#0b1014]/80 backdrop-blur-sm p-8 shadow-2xl border border-white/10">
       {/* Logo */}
       <div className="flex items-center justify-center mb-1">
         <Image
@@ -148,7 +148,7 @@ export default function HeroForm() {
               </svg>
             </button>
           </div>
-          
+
           {/* Aviso */}
           <div className="flex items-center justify-center gap-2 text-sm text-white/70">
             <svg

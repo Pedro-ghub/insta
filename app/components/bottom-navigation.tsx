@@ -26,7 +26,7 @@ export default function BottomNavigation({ profilePicUrl, maskedProfileName, use
 
   return (
     <>
-      <nav className="fixed bottom-0 left-0 right-0 z-10 flex items-center justify-around border-t border-white/10 bg-black px-4 py-2">
+      <nav className="fixed bottom-0 left-0 right-0 z-10 flex items-center justify-around border-t border-white/10 bg-[#0b1014] px-4 py-2">
         {/* Home Icon */}
         <button onClick={handleHomeClick} className="cursor-pointer">
           <svg
