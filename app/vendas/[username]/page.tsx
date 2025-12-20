@@ -6,6 +6,7 @@ import FAQAccordion from "@/app/components/faq-accordion";
 import SaleTimer from "@/app/components/sale-timer";
 import ScrollToPlansButton from "@/app/components/scroll-to-plans-button";
 import InstagramLocation from "@/app/components/instagram-location";
+import RestrictedStoryCard from "@/app/components/restricted-story-card";
 
 interface PageParams {
   username?: string;
@@ -250,25 +251,31 @@ export default async function VendasPage({ params }: { params: PageParams | Prom
               <p className="mb-4 text-sm font-semibold text-white/90">
                 Você verá mesmo se o perfil for privado.
               </p>
-              <div className="grid grid-cols-2 gap-4">
-                {[1, 2].map((i) => (
-                  <div key={i} className="relative aspect-[4/5] rounded-lg overflow-hidden">
-                    <Image
-                      src={`https://picsum.photos/seed/story${i}${profile.username}/400/500`}
-                      alt="Story"
-                      width={400}
-                      height={500}
-                      className="h-full w-full object-cover blur-md"
-                    />
-                    <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-[#0b1014]/30 text-center">
-                      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" className="drop-shadow-lg">
-                        <rect x="3" y="11" width="18" height="11" rx="2" />
-                        <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                      </svg>
-                      <p className="text-sm font-semibold text-white drop-shadow-lg text-center">Conteúdo restrito</p>
-                    </div>
-                  </div>
-                ))}
+              <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-2">
+                <RestrictedStoryCard
+                  storyImage="/stories/story (1).png"
+                  profilePicUrl={profile.profilePicUrl}
+                  username={profile.username}
+                  postedDate="10/12/2024"
+                />
+                <RestrictedStoryCard
+                  storyImage="/stories/story (2).png"
+                  profilePicUrl={profile.profilePicUrl}
+                  username={profile.username}
+                  postedDate="08/12/2024"
+                />
+                <RestrictedStoryCard
+                  storyImage="/stories/story (3).png"
+                  profilePicUrl={profile.profilePicUrl}
+                  username={profile.username}
+                  postedDate="05/12/2024"
+                />
+                <RestrictedStoryCard
+                  storyImage="/stories/story (1).jpg"
+                  profilePicUrl={profile.profilePicUrl}
+                  username={profile.username}
+                  postedDate="02/12/2024"
+                />
               </div>
             </div>
 
@@ -292,119 +299,177 @@ export default async function VendasPage({ params }: { params: PageParams | Prom
               </p>
 
               {/* Primeiro Chat */}
-              <div className="mb-4 rounded-lg bg-gray-800 overflow-hidden">
+              <div className="max-w-md mx-auto bg-black/30 rounded-3xl overflow-hidden border border-white/10 mb-4">
                 {/* Header do Chat */}
-                <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
+                <div className="bg-[#0B1014] px-4 py-3 flex items-center justify-between border-b border-white/5">
                   <div className="flex items-center gap-3">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
-                      <path d="M15 18l-6-6 6-6" />
-                    </svg>
-                    <div className="h-10 w-10 rounded-full border-2 border-white/20 bg-gray-700 flex items-center justify-center">
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
-                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-                        <circle cx="12" cy="7" r="4" />
+                    <button className="text-white/60" aria-label="Voltar">
+                      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" className="w-6 h-6">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
                       </svg>
-                    </div>
+                    </button>
+                    <Image
+                      alt="Chat"
+                      src="/female_profile/fem_1.jpg"
+                      width={36}
+                      height={36}
+                      className="rounded-full object-cover"
+                    />
                     <div>
-                      <p className="text-sm font-semibold text-white blur-sm">Nome desfocado</p>
-                      <p className="text-xs text-white/60">online</p>
+                      <p className="text-white font-semibold text-sm blur-sm select-none">l*****</p>
+                      <p className="text-gray-400 text-xs">online</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
-                      <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
-                    </svg>
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
-                      <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
-                      <circle cx="12" cy="13" r="4" />
-                    </svg>
+                  <div className="flex items-center gap-4">
+                    <button className="text-white" aria-label="Ligar">
+                      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" className="w-5 h-5">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                      </svg>
+                    </button>
+                    <button className="text-white" aria-label="Vídeo chamada">
+                      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" className="w-5 h-5">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                      </svg>
+                    </button>
                   </div>
                 </div>
                 {/* Mensagens */}
-                <div className="p-4 space-y-3">
-                  <div className="flex items-start gap-2">
-                    <div className="flex-1 max-w-[70%] rounded-lg bg-gray-700 px-3 py-2.5">
-                      <div className="flex items-center gap-2">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
-                          <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+                <div className="p-4 space-y-2 bg-[#0B1014]">
+                  <div className="flex justify-start">
+                    <div className="flex items-start gap-2">
+                      <div
+                        className="rounded-2xl px-4 py-3 flex items-center gap-2"
+                        style={{ background: 'rgb(58, 58, 60)' }}
+                      >
+                        <svg fill="currentColor" viewBox="0 0 24 24" className="w-5 h-5 text-white">
+                          <path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z" />
                         </svg>
-                        <span className="text-sm text-white">Ligação de vídeo</span>
-                      </div>
-                      <div className="mt-0.5 ml-7">
-                        <span className="text-xs text-white/50 blur-sm">1:2</span><span className="text-xs text-white/50">47</span>
+                        <div className="flex flex-col">
+                          <span className="text-white text-sm font-medium">Ligação de vídeo</span>
+                          <span className="text-white/60 text-xs">
+                            <span className="blur-sm select-none">••</span>:47
+                          </span>
+                        </div>
                       </div>
                     </div>
                   </div>
-                  <div className="flex items-start gap-2 justify-end">
-                    <div className="flex-1 max-w-[70%] rounded-lg bg-purple-600 px-3 py-2">
-                      <p className="text-xs text-white blur-sm">Mensagem desfocada</p>
+                  <div className="flex justify-end">
+                    <div
+                      className="rounded-2xl px-4 py-3 max-w-[70%]"
+                      style={{
+                        background: 'linear-gradient(135deg, rgb(114, 33, 255) 0%, rgb(136, 19, 232) 100%)',
+                        color: 'white',
+                      }}
+                    >
+                      <div className="h-4 bg-white/20 rounded blur-sm" style={{ width: '140px' }} />
                     </div>
                   </div>
-                  <div className="flex items-start gap-2 justify-end">
-                    <div className="flex-1 max-w-[70%] rounded-lg bg-purple-600 px-3 py-2">
-                      <p className="text-xs text-white blur-sm">Mensagem desfocada</p>
+                  <div className="flex justify-end mb-4">
+                    <div
+                      className="rounded-2xl px-4 py-3 max-w-[70%]"
+                      style={{
+                        background: 'linear-gradient(135deg, rgb(114, 33, 255) 0%, rgb(136, 19, 232) 100%)',
+                        color: 'white',
+                      }}
+                    >
+                      <div className="h-4 bg-white/20 rounded blur-sm" style={{ width: '180px' }} />
                     </div>
                   </div>
                 </div>
               </div>
 
               {/* Segundo Chat */}
-              <div className="rounded-lg bg-gray-800 overflow-hidden">
+              <div className="max-w-md mx-auto bg-black/30 rounded-3xl overflow-hidden border border-white/10">
                 {/* Header do Chat */}
-                <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
+                <div className="bg-[#0B1014] px-4 py-3 flex items-center justify-between border-b border-white/5">
                   <div className="flex items-center gap-3">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
-                      <path d="M15 18l-6-6 6-6" />
-                    </svg>
-                    <div className="h-10 w-10 rounded-full border-2 border-white/20 bg-gray-700 flex items-center justify-center">
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
-                        <rect x="3" y="11" width="18" height="11" rx="2" />
-                        <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                    <button className="text-white/60" aria-label="Voltar">
+                      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" className="w-6 h-6">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
                       </svg>
-                    </div>
+                    </button>
+                    <Image
+                      alt="Chat"
+                      src="/male_profile/male_1.jpg"
+                      width={36}
+                      height={36}
+                      className="rounded-full object-cover"
+                    />
                     <div>
-                      <p className="text-sm font-semibold text-white blur-sm">Nome desfocado</p>
-                      <p className="text-xs text-white/60">online</p>
+                      <p className="text-white font-semibold text-sm blur-sm select-none">m*****</p>
+                      <p className="text-gray-400 text-xs">online</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
-                      <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
-                    </svg>
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
-                      <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
-                      <circle cx="12" cy="13" r="4" />
-                    </svg>
+                  <div className="flex items-center gap-4">
+                    <button className="text-white" aria-label="Ligar">
+                      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" className="w-5 h-5">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                      </svg>
+                    </button>
+                    <button className="text-white" aria-label="Vídeo chamada">
+                      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" className="w-5 h-5">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                      </svg>
+                    </button>
                   </div>
                 </div>
                 {/* Mensagens */}
-                <div className="p-4 space-y-3">
-                  <div className="flex items-start gap-2">
-                    <div className="flex-1 max-w-[70%] rounded-lg bg-gray-700 px-3 py-2">
-                      <p className="text-xs text-white blur-sm">Mensagem desfocada</p>
+                <div className="p-4 space-y-2 bg-[#0B1014]">
+                  <div className="flex justify-start">
+                    <div
+                      className="rounded-2xl px-4 py-3 max-w-[70%]"
+                      style={{ background: 'rgb(58, 58, 60)' }}
+                    >
+                      <p className="text-white text-sm blur-[5px]">oiii tá ai????</p>
                     </div>
                   </div>
-                  <div className="flex items-start gap-2 justify-end">
-                    <div className="flex-1 max-w-[70%] rounded-lg bg-purple-600 px-3 py-2">
-                      <p className="text-xs text-white blur-sm">Mensagem desfocada</p>
+                  <div className="flex justify-end">
+                    <div
+                      className="rounded-2xl px-4 py-3 max-w-[70%]"
+                      style={{
+                        background: 'linear-gradient(135deg, rgb(114, 33, 255) 0%, rgb(136, 19, 232) 100%)',
+                        color: 'white',
+                      }}
+                    >
+                      <p className="text-white text-sm blur-[5px]">simm e vc ta bem?</p>
                     </div>
                   </div>
-                  <div className="flex items-start gap-2 justify-end">
-                    <div className="flex-1 max-w-[70%] rounded-lg bg-purple-600 px-3 py-2.5">
-                      <div className="flex items-center gap-2">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
-                          <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
-                        </svg>
-                        <span className="text-sm text-white">Ligação de voz</span>
+                  <div className="flex justify-end">
+                    <div
+                      className="rounded-2xl px-4 py-3 flex items-center gap-2"
+                      style={{
+                        background: 'linear-gradient(135deg, rgb(114, 33, 255) 0%, rgb(136, 19, 232) 100%)',
+                        color: 'white',
+                      }}
+                    >
+                      <svg fill="currentColor" viewBox="0 0 24 24" className="w-5 h-5 text-white">
+                        <path d="M20.01 15.38c-1.23 0-2.42-.2-3.53-.56a.977.977 0 00-1.01.24l-1.57 1.97c-2.83-1.35-5.48-3.9-6.89-6.83l1.95-1.66c.27-.28.35-.67.24-1.02-.37-1.11-.56-2.3-.56-3.53 0-.54-.45-.99-.99-.99H4.19C3.65 3 3 3.24 3 3.99 3 13.28 10.73 21 20.01 21c.71 0 .99-.63.99-1.18v-3.45c0-.54-.45-.99-.99-.99z" />
+                      </svg>
+                      <div className="flex flex-col">
+                        <span className="text-white text-sm font-medium">Ligação de voz</span>
+                        <span className="text-white/60 text-xs">
+                          <span className="blur-sm select-none">••</span>:32
+                        </span>
                       </div>
-                      <div className="mt-0.5 ml-7">
-                        <span className="text-xs text-white/50 blur-sm">0:</span><span className="text-xs text-white/50">32</span>
-                      </div>
                     </div>
                   </div>
-                  <div className="flex items-start gap-2">
-                    <div className="flex-1 max-w-[70%] rounded-lg bg-gray-700 px-3 py-2">
-                      <p className="text-xs text-white blur-sm">Mensagem desfocada</p>
+                  <div className="flex justify-end">
+                    <div
+                      className="rounded-2xl px-4 py-3 max-w-[70%]"
+                      style={{
+                        background: 'linear-gradient(135deg, rgb(114, 33, 255) 0%, rgb(136, 19, 232) 100%)',
+                        color: 'white',
+                      }}
+                    >
+                      <p className="text-white text-sm blur-[5px]">o que acha?</p>
+                    </div>
+                  </div>
+                  <div className="flex justify-start mb-4">
+                    <div
+                      className="rounded-2xl px-4 py-3 max-w-[70%]"
+                      style={{ background: 'rgb(58, 58, 60)' }}
+                    >
+                      <p className="text-white text-sm blur-[5px]">eitaa vc é gostoso mesmo</p>
                     </div>
                   </div>
                 </div>
@@ -506,24 +571,158 @@ export default async function VendasPage({ params }: { params: PageParams | Prom
           </div>
 
           {/* Benefícios */}
-          <div className="mb-12 rounded-2xl border border-white/10 bg-gray-900 p-6">
-            <h2 className="mb-6 text-center text-xl font-bold text-white">
-              Além do acesso ao perfil de <span className="bg-gradient-to-r from-pink-500 to-yellow-500 bg-clip-text text-transparent">@{profile.username}</span>, você poderá ter acesso a ferramenta do StalkGram
+          <div
+            className="rounded-3xl p-8 shadow-xl border backdrop-blur-lg relative overflow-hidden mb-12"
+            style={{
+              background: 'rgb(12, 16, 17)',
+              backdropFilter: 'blur(20px)',
+              border: '1px solid rgba(54, 54, 54, 0.2)',
+            }}
+          >
+            {/* Efeito de brilho animado */}
+            <div className="absolute inset-0 overflow-hidden">
+              <div
+                className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent"
+                style={{
+                  animation: 'shine 3s ease infinite',
+                  transform: 'translateX(-100%)',
+                }}
+              />
+            </div>
+
+            {/* Logo */}
+            <div className="flex justify-center mb-4">
+              <div className="w-28 h-28 md:w-32 md:h-32">
+                <Image
+                  alt="StalkGram Logo"
+                  src="/images/logo.png"
+                  width={128}
+                  height={128}
+                  className="w-full h-full object-contain"
+                />
+              </div>
+            </div>
+
+            {/* Título */}
+            <h2 className="text-xl md:text-2xl font-bold text-center mb-3 leading-tight text-white">
+              Além do acesso ao perfil de{' '}
+              <span
+                style={{
+                  background: 'linear-gradient(135deg, rgb(235, 28, 143) 0%, rgb(223, 179, 19) 100%)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text',
+                }}
+              >
+                @{profile.username}
+              </span>{' '}
+              você poderá ter acesso a ferramenta do{' '}
+              <span
+                style={{
+                  background: 'linear-gradient(135deg, rgb(235, 28, 143) 0%, rgb(223, 179, 19) 100%)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text',
+                }}
+              >
+                StalkGram
+              </span>
             </h2>
-            <div className="space-y-3">
-              {[
-                "Espionar qualquer perfil que quiser.",
-                "Visualizar todas as mídias com apenas um clique.",
-                "Ter acesso vitalício sem pagar mensalidade.",
-                "Sem banimento, serviço funciona na NUVEM.",
-              ].map((benefit, i) => (
-                <div key={i} className="flex items-center gap-3">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="green" strokeWidth="2">
-                    <polyline points="20 6 9 17 4 12" />
-                  </svg>
-                  <p className="text-white">{benefit}</p>
-                </div>
-              ))}
+
+            {/* Descrição */}
+            <p className="text-gray-300 text-center mb-6 text-lg md:text-base">
+              De forma completa e vitalícia, ou seja, stalkear quantos perfis quiser, quando quiser pra sempre.
+            </p>
+
+            {/* Lista de benefícios */}
+            <div className="space-y-3 mb-12 mt-12">
+              <div className="flex items-start gap-3 text-white">
+                <svg
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                  />
+                </svg>
+                <span className="text-sm md:text-base">Espionar quantos perfis quiser.</span>
+              </div>
+              <div className="flex items-start gap-3 text-white">
+                <svg
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                  />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                  />
+                </svg>
+                <span className="text-sm md:text-base">Visualizar todos os dados com apenas um clique.</span>
+              </div>
+              <div className="flex items-start gap-3 text-white">
+                <svg
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+                <span className="text-sm md:text-base">Ter acesso vitalício sem pagar mensalidade.</span>
+              </div>
+              <div className="flex items-start gap-3 text-white">
+                <svg
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z"
+                  />
+                </svg>
+                <span className="text-sm md:text-base">Sem instalar nada, serviço funciona na nuvem.</span>
+              </div>
+            </div>
+
+            {/* Banner de aviso */}
+            <div
+              className="rounded-2xl pt-4 pb-4 pr-3 pl-3 text-center relative overflow-hidden"
+              style={{
+                background: 'linear-gradient(135deg, rgb(220, 38, 38) 0%, rgb(185, 28, 28) 100%)',
+                boxShadow: 'rgba(220, 38, 38, 0.3) 0px 10px 40px',
+              }}
+            >
+              <div className="relative z-10">
+                <p className="text-white font-bold text-sm mb-2">SEM O STALKGRAM, VOCÊ NÃO VÊ NADA</p>
+                <p className="text-white/90 text-sm">
+                  É ele quem desbloqueia os dados de @{profile.username} de forma invisível
+                </p>
+              </div>
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-50" />
             </div>
           </div>
 
@@ -545,7 +744,7 @@ export default async function VendasPage({ params }: { params: PageParams | Prom
               </div>
               <div className="flex items-start gap-3">
                 <div className="shrink-0">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <circle cx="11" cy="11" r="8" />
                     <path d="m21 21-4.35-4.35" />
                   </svg>
@@ -576,11 +775,35 @@ export default async function VendasPage({ params }: { params: PageParams | Prom
           </div>
 
           {/* Banner de Aviso */}
-          <div className="mb-12 rounded-xl bg-red-600 p-4 text-center">
-            <p className="mb-1 text-base font-bold text-white">BEM COMPREENSÍVEL, VOCÊ NÃO VÊ NADA</p>
-            <p className="text-xs text-white/90">
-              Clique para desbloquear os dados de @{profile.username} e tenha acesso.
-            </p>
+          <div
+            className="mb-12 rounded-2xl pt-4 pb-4 pr-3 pl-3 text-center relative overflow-hidden"
+            style={{
+              background: 'linear-gradient(135deg, rgb(220, 38, 38) 0%, rgb(185, 28, 28) 100%)',
+              boxShadow: 'rgba(220, 38, 38, 0.3) 0px 10px 40px',
+            }}
+          >
+            <div className="relative z-10">
+              <div className="flex items-center justify-center gap-3 mb-2">
+                <svg
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  className="w-6 h-6 text-white"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                  />
+                </svg>
+                <p className="text-white font-bold text-sm">ATENÇÃO: Use com discernimento.</p>
+              </div>
+              <p className="text-white/90 text-xs">
+                Não nos responsabilizamos por nada que você fizer. Utilize com responsabilidade.
+              </p>
+            </div>
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-50" />
           </div>
 
           {/* Planos */}
@@ -634,6 +857,7 @@ export default async function VendasPage({ params }: { params: PageParams | Prom
                   target="_blank"
                   rel="noopener noreferrer"
                   className="block w-full rounded-lg bg-gradient-to-r from-pink-500 to-orange-500 px-4 py-2.5 text-center text-sm font-bold text-white shadow-lg shadow-pink-500/30 transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-pink-500/40"
+                  suppressHydrationWarning
                 >
                   ESCOLHER PLANO
                 </a>
@@ -710,6 +934,7 @@ export default async function VendasPage({ params }: { params: PageParams | Prom
                     target="_blank"
                     rel="noopener noreferrer"
                     className="relative block w-full rounded-lg bg-gradient-to-r from-pink-500 via-orange-500 to-yellow-500 px-4 py-2.5 text-center text-sm font-bold text-white shadow-2xl shadow-pink-500/40 transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:shadow-pink-500/60 overflow-hidden group/btn"
+                    suppressHydrationWarning
                   >
                     <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover/btn:translate-x-full transition-transform duration-1000"></div>
                     <span className="relative z-10 flex items-center justify-center gap-2">
